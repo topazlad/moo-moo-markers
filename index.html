@@ -15,21 +15,43 @@
       display: flex; flex-direction: column; overflow: hidden; 
     }
     #map { flex-grow: 1; position: relative; z-index: 0; }
-    #controls {
-      background: #fff; box-shadow: 0 -3px 10px rgba(0,0,0,0.12);
-      padding: 10px 12px; display: flex; justify-content: center;
-      align-items: center; gap: 10px; user-select: none;
-      border-top-left-radius: 12px; border-top-right-radius: 12px;
-      z-index: 10; flex-shrink: 0;
+    nav#controls {
+      background: #fff; 
+      box-shadow: 0 -3px 10px rgba(0,0,0,0.12);
+      padding: 10px 12px; 
+      display: flex; 
+      justify-content: center;
+      align-items: center; 
+      gap: 10px; 
+      user-select: none;
+      border-top-left-radius: 12px; 
+      border-top-right-radius: 12px;
+      z-index: 10; 
+      flex-shrink: 0;
+      flex-wrap: nowrap;
+      overflow-x: auto;
     }
+    /* Base button style for all buttons */
     button {
       background: linear-gradient(145deg, #6fcf97, #27ae60);
-      border: none; color: white; font-weight: 700; font-size: 0.9rem;
-      min-width: 70px; height: 50px; border-radius: 14px; cursor: pointer;
+      border: none; 
+      color: white; 
+      font-weight: 700; 
+      font-size: 0.9rem;
+      min-width: 70px;
+      height: 50px; 
+      border-radius: 14px; 
+      cursor: pointer;
       box-shadow: 5px 5px 10px #1e7c45, -5px -5px 10px #48d67f;
-      transition: all 0.2s ease; user-select: none; touch-action: manipulation;
-      display: flex; justify-content: center; align-items: center; text-align: center;
-      line-height: 1.2; padding: 0 8px;
+      transition: all 0.2s ease; 
+      user-select: none; 
+      touch-action: manipulation;
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      text-align: center;
+      line-height: 1.2; 
+      padding: 0 8px;
     }
     button:hover, button:focus {
       transform: translateY(-2px);
@@ -37,7 +59,10 @@
       outline: none;
     }
     button:active { transform: translateY(1px); background: #1e7c45; box-shadow: inset 2px 2px 6px #144c2d; }
-    #instructions { text-align: center; font-size: 0.85rem; color: #555; user-select: none; margin-top: 8px; padding: 0 15px; }
+    
+    p#instructions {
+      text-align: center; font-size: 0.85rem; color: #555; user-select: none; margin-top: 8px; padding: 0 15px;
+    }
     .cow-marker { font-size: 30px; transition: transform 0.3s ease; cursor: pointer; user-select: none; }
     .cow-marker.active { transform: scale(2.2); z-index: 9999; filter: drop-shadow(0 0 5px rgba(39,174,96,0.8)); }
     .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 99999; visibility: hidden; opacity: 0; transition: opacity 0.25s ease; }
@@ -58,6 +83,9 @@
     .edit-action:hover { background: #2980b9; }
     .delete-action { background: #e74c3c; color: white; }
     .delete-action:hover { background: #c0392b; }
+    #importQRInput {
+      display: none;
+    }
   </style>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
@@ -68,13 +96,15 @@
 
 <div id="map"></div>
 
-<div id="controls" role="region" aria-label="Map Controls">
+<nav id="controls" role="region" aria-label="Map Controls">
   <button id="locateBtn">Locate</button>
   <button id="showQRBtn">Show QR</button>
   <button id="scanQRBtn">Scan QR</button>
+  <button id="importQRBtn">Import QR</button>
+  <input type="file" id="importQRInput" accept="image/*" />
   <button id="clearBtn">Clear All</button>
-</div>
-<div id="instructions">Tap map to add cows 🐄</div>
+</nav>
+<p id="instructions">Tap map to add cows 🐄</p>
 
 <div id="qrOverlay" class="overlay"><div class="popup">
   <h2 id="qrTitle">Share This Cow Map</h2>
@@ -86,7 +116,7 @@
 <div id="scanOverlay" class="overlay"><div class="popup">
   <h2 id="scanTitle">Scan Cow Map QR Code</h2>
   <video id="video" autoplay playsinline></video>
-  <div id="scanMessage">Point camera at a QR code</div>
+  <p id="scanMessage">Point camera at a QR code</p>
   <button class="popup-close-btn">Close</button>
 </div></div>
 
@@ -109,6 +139,26 @@
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
+
+  function saveMarkers() {
+    const data = markers.map(m => {
+      const { lat, lng } = m.getLatLng();
+      return { lat, lng, name: m.options.title };
+    });
+    localStorage.setItem('cowMarkers', JSON.stringify(data));
+  }
+  
+  function loadMarkers() {
+    const storedData = localStorage.getItem('cowMarkers');
+    if (storedData) {
+      try {
+        const data = JSON.parse(storedData);
+        data.forEach(cow => addCowMarker(cow.lat, cow.lng, cow.name));
+      } catch (e) {
+        console.error('Failed to parse stored markers:', e);
+      }
+    }
+  }
 
   async function getLocationName(lat, lng) {
     try {
@@ -174,7 +224,6 @@
 
     // Context menu for edit/delete
     marker.on('contextmenu', () => {
-      // Close any existing popup first
       if (map._popup) map.closePopup();
 
       const actionContent = `
@@ -194,18 +243,17 @@
 
         if (editBtn) {
           editBtn.addEventListener('click', () => {
-            const newName = prompt('Edit cow name:', marker.options.title);
-            if (newName && newName.trim() !== '') {
-              marker.options.title = newName.trim();
-              // Update tooltip title attribute on the marker icon
-              if (marker._icon) marker._icon.title = newName.trim();
+            openNameModal(marker.options.title, (newName) => {
+              marker.options.title = newName;
+              if (marker._icon) marker._icon.title = newName;
               if (marker.getPopup()) {
                 marker.getPopup().setContent(getInfoContent(marker));
                 if (!marker.getPopup().isOpen()) {
                   marker.openPopup();
                 }
               }
-            }
+              saveMarkers(); // Save state after editing
+            });
             map.closePopup(actionPopup);
           });
         }
@@ -217,6 +265,7 @@
               const index = markers.indexOf(marker);
               if (index > -1) markers.splice(index, 1);
               if (activeMarker === marker) activeMarker = null;
+              saveMarkers(); // Save state after deleting
               updateInstructions();
             }
             map.closePopup(actionPopup);
@@ -233,6 +282,7 @@
     markers.forEach(m => map.removeLayer(m));
     markers.length = 0;
     activeMarker = null;
+    localStorage.removeItem('cowMarkers'); // Clear local storage
     updateInstructions();
   }
 
@@ -281,7 +331,7 @@
       return [parseFloat(lat.toFixed(5)), parseFloat(lng.toFixed(5)), m.options.title];
     });
     const dataString = JSON.stringify(compactData);
-    if (dataString.length > MAX_QR_DATA_LENGTH) alert('Too many cows for reliable QR.');
+    if (dataString.length > MAX_QR_DATA_LENGTH) return alert('Too many cows for reliable QR.');
     qrCodeContainer.innerHTML = '';
     new QRCode(qrCodeContainer, { text: dataString, width: QR_SIZE, height: QR_SIZE, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.M });
     qrOverlay.classList.add('visible');
@@ -329,44 +379,145 @@
     const code = jsQR(imageData.data, imageData.width, imageData.height);
     if (code) {
       closeScanner();
-      try {
-        const loadedData = JSON.parse(code.data);
-        if (!Array.isArray(loadedData)) throw new Error();
-        clearAllMarkers();
-        loadedData.forEach(cow => {
-          if (!Array.isArray(cow) || cow.length < 2) return;
-          const [lat, lng, name] = cow;   
-          addCowMarker(lat, lng, name || 'Imported Cow');
-        });
-
-        if (markers.length > 0) {
-          const group = new L.featureGroup(markers);
-          const bounds = group.getBounds().pad(0.2);
-          map.fitBounds(bounds);
-          if (markers.length === 1) map.setZoom(SINGLE_MARKER_ZOOM);
-        }
-
-      } catch (e) {
-        alert("Could not read QR code. Invalid Cow Map format.");
-      }
+      processQRCodeData(code.data);
       return;
     }
     requestAnimationFrame(scanLoop);
   }
 
+  function processQRCodeData(dataString) {
+    try {
+      const loadedData = JSON.parse(dataString);
+      if (!Array.isArray(loadedData)) throw new Error();
+      clearAllMarkers();
+      loadedData.forEach(cow => {
+        if (!Array.isArray(cow) || cow.length < 2) return;
+        const [lat, lng, name] = cow;   
+        addCowMarker(lat, lng, name || 'Imported Cow');
+      });
+
+      if (markers.length > 0) {
+        const group = new L.featureGroup(markers);
+        const bounds = group.getBounds().pad(0.2);
+        map.fitBounds(bounds);
+        if (markers.length === 1) map.setZoom(SINGLE_MARKER_ZOOM);
+      }
+    } catch (e) {
+      alert("Could not read QR code. Invalid Cow Map format.");
+    }
+  }
+
   document.getElementById('scanQRBtn').addEventListener('click', openScanner);
-  document.getElementById('scanQRBtn').addEventListener('click', openScanner);
+
+  // Import QR image logic
+  const importQRBtn = document.getElementById('importQRBtn');
+  const importQRInput = document.getElementById('importQRInput');
+
+  importQRBtn.addEventListener('click', () => {
+    importQRInput.value = null;  // reset file input
+    importQRInput.click();
+  });
+
+  importQRInput.addEventListener('change', () => {
+    const file = importQRInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          processQRCodeData(code.data);
+        } else {
+          alert('No valid QR code found in the image.');
+        }
+      };
+      img.onerror = () => alert('Failed to load image.');
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
   document.getElementById('clearBtn').addEventListener('click', clearAllMarkers);
   qrOverlay.querySelector('.popup-close-btn').addEventListener('click', () => qrOverlay.classList.remove('visible'));
   scanOverlay.querySelector('.popup-close-btn').addEventListener('click', closeScanner);
 
+  // Name edit modal helper
+  // Creates a prompt modal with Save and Cancel buttons
+  function openNameModal(currentName, callback) {
+    const modal = document.createElement('div');
+    modal.className = 'overlay visible';
+    modal.style.zIndex = '100000';
+
+    const popup = document.createElement('div');
+    popup.className = 'popup';
+    popup.style.maxWidth = '300px';
+    popup.style.textAlign = 'center';
+
+    popup.innerHTML = `
+      <h2>Edit Cow Name</h2>
+      <input type="text" value="${currentName.replace(/"/g, '&quot;')}" style="width: 100%; font-size: 1.1rem; padding: 8px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px;" />
+      <div style="display: flex; justify-content: center; gap: 12px;">
+        <button class="save-btn" style="flex-grow:1; background:#27ae60; color:white; border:none; border-radius: 14px; padding: 8px 0; font-weight:700; cursor:pointer;">Save</button>
+        <button class="cancel-btn" style="flex-grow:1; background:#e74c3c; color:white; border:none; border-radius: 14px; padding: 8px 0; font-weight:700; cursor:pointer;">Cancel</button>
+      </div>
+    `;
+
+    modal.appendChild(popup);
+    document.body.appendChild(modal);
+
+    const input = popup.querySelector('input');
+    input.focus();
+    input.select();
+
+    function closeModal() {
+      document.body.removeChild(modal);
+    }
+
+    popup.querySelector('.save-btn').addEventListener('click', () => {
+      const val = input.value.trim() || currentName;
+      callback(val);
+      closeModal();
+    });
+
+    popup.querySelector('.cancel-btn').addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        popup.querySelector('.save-btn').click();
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal();
+      }
+    });
+  }
+
+  // Map click adds new cow marker using modal for naming
   map.on('click', e => {
-    const name = prompt('Name this cow:', DEFAULT_COW_NAME) || DEFAULT_COW_NAME;
-    addCowMarker(e.latlng.lat, e.latlng.lng, name);
+    openNameModal(DEFAULT_COW_NAME, (name) => {
+      addCowMarker(e.latlng.lat, e.latlng.lng, name);
+      saveMarkers(); // Save state after adding
+    });
   });
 
+  // Initial setup
+  loadMarkers();
   updateInstructions();
 })();
 </script>
+
 </body>
 </html>
