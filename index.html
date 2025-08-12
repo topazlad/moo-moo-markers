@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Moo Moo Markers - QR Data Sharing</title>
+  <title>Moo Moo Markers v1.3 - QR Data Sharing</title>
   
   <style>
+    /* Base styles */
     * { box-sizing: border-box; }
     body, html {
       margin: 0; padding: 0; height: 100%; width: 100%;
@@ -13,7 +14,50 @@
         Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
       background: #faf9f7; color: #2c3e50;
       display: flex; flex-direction: column; overflow: hidden; 
+      transition: background 0.3s ease, color 0.3s ease;
     }
+    
+    /* Dark mode styles */
+    body.dark-mode {
+      background: #121212;
+      color: #e0e0e0;
+    }
+    body.dark-mode nav#controls, body.dark-mode #side-menu {
+      background: #1e1e1e;
+      box-shadow: 0 -3px 10px rgba(255,255,255,0.08);
+    }
+    body.dark-mode nav#controls button {
+      box-shadow: 5px 5px 10px #0a0a0a, -5px -5px 10px #323232;
+    }
+    body.dark-mode nav#controls button:hover, body.dark-mode nav#controls button:focus {
+      box-shadow: 6px 6px 12px #0a0a0a, -6px -6px 12px #323232;
+    }
+    body.dark-mode nav#controls button:active {
+      background: #0a0a0a;
+      box-shadow: inset 2px 2px 6px #050505;
+    }
+    body.dark-mode p#instructions {
+      color: #aaaaaa;
+    }
+    body.dark-mode .popup {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    body.dark-mode .popup h2 {
+      color: #27ae60;
+    }
+    body.dark-mode .popup input {
+      background: #2c2c2c;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+    body.dark-mode .popup-content p {
+      background: #2c2c2c;
+      border: 1px solid #444;
+      color: #e0e0e0;
+    }
+    
     #map { flex-grow: 1; position: relative; z-index: 0; }
     nav#controls {
       background: #fff; 
@@ -30,15 +74,17 @@
       flex-shrink: 0;
       flex-wrap: nowrap;
       overflow-x: auto;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
     }
+    
     /* Base button style for all buttons */
     button {
       background: linear-gradient(145deg, #6fcf97, #27ae60);
       border: none; 
       color: white; 
       font-weight: 700; 
-      font-size: 0.9rem;
-      min-width: 70px;
+      font-size: 1.5rem; /* Increased font size for emojis */
+      width: 50px;
       height: 50px; 
       border-radius: 14px; 
       cursor: pointer;
@@ -50,8 +96,8 @@
       justify-content: center; 
       align-items: center; 
       text-align: center;
-      line-height: 1.2; 
-      padding: 0 8px;
+      padding: 0; /* Remove padding for square buttons */
+      position: relative; /* Needed for tooltip positioning */
     }
     button:hover, button:focus {
       transform: translateY(-2px);
@@ -59,33 +105,242 @@
       outline: none;
     }
     button:active { transform: translateY(1px); background: #1e7c45; box-shadow: inset 2px 2px 6px #144c2d; }
+
+    /* Specific button styles for clarity */
+    #darkModeToggleBtn.light { background: linear-gradient(145deg, #f1c40f, #f39c12); }
+    #darkModeToggleBtn.light:hover { box-shadow: 6px 6px 12px #c27c0e, -6px -6px 12px #ffc140; }
+    #darkModeToggleBtn.light:active { background: #c27c0e; box-shadow: inset 2px 2px 6px #945f0b; }
+
+    #showQRBtn, #downloadQRBtn { background: linear-gradient(145deg, #3498db, #2980b9); }
+    #showQRBtn:hover, #downloadQRBtn:hover { box-shadow: 6px 6px 12px #1f618d, -6px -6px 12px #57c0f6; }
+    #showQRBtn:active, #downloadQRBtn:active { background: #1f618d; box-shadow: inset 2px 2px 6px #14435f; }
+
+    .popup .save-btn, .popup .confirm-btn, .popup .ok-btn { background: #27ae60; font-size: 1.5rem; width: 50px; height: 50px; }
+    .popup .cancel-btn, .popup .delete-action { background: #e74c3c; font-size: 1.5rem; width: 50px; height: 50px; }
+    .popup .edit-action, .popup #insightBtn { background: #3498db; font-size: 1.5rem; width: 50px; height: 50px; }
+    .popup #clearInsightBtn { background: #e67e22; font-size: 1.5rem; width: 50px; height: 50px; }
     
     p#instructions {
       text-align: center; font-size: 0.85rem; color: #555; user-select: none; margin-top: 8px; padding: 0 15px;
+      transition: color 0.3s ease;
     }
     .cow-marker { font-size: 30px; transition: transform 0.3s ease; cursor: pointer; user-select: none; }
     .cow-marker.active { transform: scale(2.2); z-index: 9999; filter: drop-shadow(0 0 5px rgba(39,174,96,0.8)); }
     .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 99999; visibility: hidden; opacity: 0; transition: opacity 0.25s ease; }
     .overlay.visible { visibility: visible; opacity: 1; }
-    .popup { background: white; padding: 20px 24px 24px 24px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); text-align: center; max-width: 90vw; user-select: none; }
-    .popup h2 { margin: 0 0 12px 0; font-weight: 700; color: #27ae60; }
+    .popup { background: white; padding: 20px 24px 24px 24px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); text-align: center; max-width: 90vw; user-select: none; transition: background 0.3s ease, color 0.3s ease; }
+    .popup h2 { margin: 0 0 12px 0; font-weight: 700; color: #27ae60; transition: color 0.3s ease; }
     #qrCodeContainer { margin: 0 auto 18px auto; max-width: 300px; max-height: 300px; }
     .popup-close-btn { background: #e74c3c; color: white; border: none; border-radius: 14px; padding: 8px 18px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s ease; }
     .popup-close-btn:hover { background: #c0392b; }
     #video { width: 100%; max-width: 320px; border-radius: 12px; background: black; }
-    #scanMessage { margin: 12px 0 0 0; color: #333; font-size: 0.9rem; font-family: monospace; }
-    #downloadQRBtn { background: linear-gradient(145deg, #3498db, #2980b9); box-shadow: 5px 5px 10px #1f618d, -5px -5px 10px #4ab3e9; margin-top: 12px; width: auto; height: auto; padding: 8px 18px; }
-    #downloadQRBtn:hover { box-shadow: 6px 6px 12px #1a5276, -6px -6px 12px #57c0f6; }
-    #downloadQRBtn:active { background: #1f618d; box-shadow: inset 2px 2px 6px #14435f; }
+    #scanMessage { margin: 12px 0 0 0; color: #333; font-size: 0.9rem; font-family: monospace; transition: color 0.3s ease; }
+    #downloadQRBtn { width: auto; height: auto; padding: 8px 18px; } /* Override square for this button */
+    
     .leaflet-popup-content small { font-size: 0.7rem; color: #666; display: block; }
-    .action-btn { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: none; margin: 2px; }
-    .edit-action { background: #3498db; color: white; }
-    .edit-action:hover { background: #2980b9; }
-    .delete-action { background: #e74c3c; color: white; }
-    .delete-action:hover { background: #c0392b; }
-    #importQRInput {
-      display: none;
+    .action-btn { font-size: 1.5rem; padding: 0; width: 50px; height: 50px; border-radius: 14px; cursor: pointer; border: none; margin: 2px; }
+    #importQRInput { display: none; }
+    
+    /* Loading animation for buttons */
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      margin-left: 0.5em;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      vertical-align: middle;
     }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Hamburger Menu styles */
+    #hamburger-menu-toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      font-size: 30px;
+      cursor: pointer;
+      z-index: 1000;
+      color: #2c3e50;
+      transition: color 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body.dark-mode #hamburger-menu-toggle {
+        color: #e0e0e0;
+    }
+    
+    #side-menu {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 300px;
+      max-width: 80vw;
+      height: 100%;
+      background: #fff;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.15);
+      z-index: 999;
+      padding: 60px 20px 20px;
+      transition: right 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      user-select: none;
+    }
+    
+    #side-menu.visible {
+      right: 0;
+    }
+
+    /* Version number style */
+    #version-number {
+        position: absolute;
+        bottom: 20px;
+        font-size: 0.8rem;
+        color: #999;
+        user-select: none;
+    }
+    
+    /* Toggle switch for insight */
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:focus + .slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    body.dark-mode .slider {
+        background-color: #555;
+    }
+    body.dark-mode input:checked + .slider {
+        background-color: #27ae60;
+    }
+
+    /* Splash screen specific styles */
+    #splash-screen .popup {
+        max-width: 500px;
+        text-align: left;
+    }
+    #splash-screen .popup h2 {
+        text-align: center;
+        font-size: 2rem;
+    }
+    #splash-screen .popup p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    #splash-screen .popup ul {
+        margin-bottom: 20px;
+        padding-left: 20px;
+        list-style-type: disc;
+    }
+    #splash-screen .popup li {
+        margin-bottom: 8px;
+    }
+    #splash-screen .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        user-select: none;
+    }
+    #splash-screen .ok-btn {
+      font-size: 1rem; /* Adjusted start tapping button font size */
+      padding: 12px 24px;
+      height: auto;
+      width: auto;
+    }
+
+    /* Tooltip styles */
+    .tooltip {
+        position: fixed; /* Use fixed position for accurate placement */
+        background-color: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        white-space: nowrap; /* Ensures the text doesn't wrap */
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        z-index: 100000;
+        transform: translate(-50%, 0); /* Center horizontally */
+    }
+    
+    .tooltip.visible {
+        opacity: 1;
+        transform: translate(-50%, -10px);
+    }
+
+    /* Tooltip arrow */
+    .tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
+    }
+
+    body.dark-mode .tooltip {
+      background-color: #e0e0e0;
+      color: #121212;
+    }
+    body.dark-mode .tooltip::after {
+      border-color: #e0e0e0 transparent transparent transparent;
+    }
+
   </style>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
@@ -96,28 +351,71 @@
 
 <div id="map"></div>
 
+<div id="hamburger-menu-toggle">☰</div>
+
+<div id="side-menu">
+    <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
+    <button id="sayInstructionsBtn" data-tooltip="Read Instructions Aloud">🔊</button>
+    <div class="toggle-container">
+        <span>Cow Stories</span>
+        <label class="switch">
+            <input type="checkbox" id="cowStoriesToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div id="version-number">v1.3</div>
+</div>
+
 <nav id="controls" role="region" aria-label="Map Controls">
-  <button id="locateBtn">Locate</button>
-  <button id="showQRBtn">Show QR</button>
-  <button id="scanQRBtn">Scan QR</button>
-  <button id="importQRBtn">Import QR</button>
+  <button id="locateBtn" data-tooltip="Locate Me">📍</button>
+  <button id="showQRBtn" data-tooltip="Share Map QR">🖼️</button>
+  <button id="scanQRBtn" data-tooltip="Scan QR Code">📷</button>
+  <button id="importQRBtn" data-tooltip="Import Map from Image">📂</button>
   <input type="file" id="importQRInput" accept="image/*" />
-  <button id="clearBtn">Clear All</button>
+  <button id="clearBtn" data-tooltip="Clear All Cows">❌</button>
 </nav>
 <p id="instructions">Tap map to add cows 🐄</p>
 
+<!-- Splash Screen Modal -->
+<div id="splash-screen" class="overlay">
+  <div class="popup">
+    <h2>Welcome to Moo Moo Markers! 🐮</h2>
+    <p>This is a simple map app to drop markers, name them, and share them with friends via a QR code. Here's what you can do:</p>
+    <ul>
+        <li><b>Add Cows:</b> Tap anywhere on the map to add a new cow marker.</li>
+        <li><b>Cow Stories:</b> Tap a cow marker, then tap the ✨ button to generate a fun story about that cow using AI.</li>
+        <li><b>Share Maps:</b> Tap the 🖼️ button to generate a QR code of all your cow locations.</li>
+        <li><b>Import Maps:</b> Tap the 📷 or 📂 button to scan a QR code from a camera or a file to load a new map.</li>
+        <li><b>Locate Me:</b> Tap the 📍 button to find and follow your current location.</li>
+    </ul>
+    <div class="checkbox-container">
+        <input type="checkbox" id="doNotShowAgainCheckbox">
+        <label for="doNotShowAgainCheckbox">Do not show this window again</label>
+    </div>
+    <button class="ok-btn">Start Mapping</button>
+  </div>
+</div>
+
+<!-- Existing Modals -->
 <div id="qrOverlay" class="overlay"><div class="popup">
   <h2 id="qrTitle">Share This Cow Map</h2>
   <div id="qrCodeContainer"></div>
   <button id="downloadQRBtn">Download QR</button>
-  <button class="popup-close-btn">Close</button>
+  <button class="popup-close-btn">✖️</button>
 </div></div>
 
 <div id="scanOverlay" class="overlay"><div class="popup">
   <h2 id="scanTitle">Scan Cow Map QR Code</h2>
   <video id="video" autoplay playsinline></video>
   <p id="scanMessage">Point camera at a QR code</p>
-  <button class="popup-close-btn">Close</button>
+  <button class="popup-close-btn">✖️</button>
+</div></div>
+
+<!-- New Modal for Cow Story -->
+<div id="cowStoryOverlay" class="overlay"><div class="popup">
+  <h2 id="cowStoryTitle">Cow Story</h2>
+  <p id="cowStoryText">Loading...</p>
+  <button class="popup-close-btn">✖️</button>
 </div></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -130,9 +428,84 @@
   const QR_SIZE = 256;
   const MAX_QR_DATA_LENGTH = 2000;
   const SCAN_THROTTLE_MS = 100;
+  const API_KEY = ""; // Canvas will automatically provide this key. Do not add it here.
+  const LONG_PRESS_DURATION = 500; // ms
 
   const markers = [];
   let activeMarker = null;
+  const body = document.body;
+  
+  const hamburgerToggle = document.getElementById('hamburger-menu-toggle');
+  const sideMenu = document.getElementById('side-menu');
+  const darkModeToggleBtn = document.getElementById('darkModeToggleBtn');
+  const sayInstructionsBtn = document.getElementById('sayInstructionsBtn');
+  const cowStoriesToggle = document.getElementById('cowStoriesToggle');
+  const cowStoryOverlay = document.getElementById('cowStoryOverlay');
+  const cowStoryText = document.getElementById('cowStoryText');
+  const splashScreen = document.getElementById('splash-screen');
+  const doNotShowAgainCheckbox = document.getElementById('doNotShowAgainCheckbox');
+
+  let isDarkMode = localStorage.getItem('darkMode') === 'true';
+  let isCowStoriesEnabled = localStorage.getItem('cowStoriesEnabled') === 'true';
+  const showSplashScreen = localStorage.getItem('showSplashScreen') !== 'false';
+
+  // --- Splash Screen Logic ---
+  if (showSplashScreen) {
+      splashScreen.classList.add('visible');
+  }
+
+  splashScreen.querySelector('.ok-btn').addEventListener('click', () => {
+      if (doNotShowAgainCheckbox.checked) {
+          localStorage.setItem('showSplashScreen', 'false');
+      }
+      splashScreen.classList.remove('visible');
+  });
+
+  // Set initial state from local storage
+  if (isDarkMode) {
+    body.classList.add('dark-mode');
+    darkModeToggleBtn.textContent = '⚪';
+    darkModeToggleBtn.classList.remove('dark');
+    darkModeToggleBtn.classList.add('light');
+  } else {
+    darkModeToggleBtn.textContent = '⚫';
+    darkModeToggleBtn.classList.add('dark');
+    darkModeToggleBtn.classList.remove('light');
+  }
+  cowStoriesToggle.checked = isCowStoriesEnabled;
+
+  // Toggle hamburger menu visibility
+  hamburgerToggle.addEventListener('click', () => {
+      sideMenu.classList.toggle('visible');
+  });
+
+  // Toggle dark mode
+  darkModeToggleBtn.addEventListener('click', () => {
+    isDarkMode = !isDarkMode;
+    if (isDarkMode) {
+      body.classList.add('dark-mode');
+      darkModeToggleBtn.textContent = '⚪';
+      darkModeToggleBtn.classList.remove('dark');
+      darkModeToggleBtn.classList.add('light');
+    } else {
+      body.classList.remove('dark-mode');
+      darkModeToggleBtn.textContent = '⚫';
+      darkModeToggleBtn.classList.add('dark');
+      darkModeToggleBtn.classList.remove('light');
+    }
+    localStorage.setItem('darkMode', isDarkMode);
+  });
+
+  // Toggle Cow Stories feature
+  cowStoriesToggle.addEventListener('change', () => {
+      isCowStoriesEnabled = cowStoriesToggle.checked;
+      localStorage.setItem('cowStoriesEnabled', isCowStoriesEnabled);
+      // Re-render popup if active to show/hide the button
+      if (activeMarker && activeMarker.getPopup().isOpen()) {
+          activeMarker.getPopup().setContent(getInfoContent(activeMarker));
+          setupPopupButtons(activeMarker);
+      }
+  });
 
   const map = L.map('map').setView([34.95, -120.43], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -143,7 +516,7 @@
   function saveMarkers() {
     const data = markers.map(m => {
       const { lat, lng } = m.getLatLng();
-      return { lat, lng, name: m.options.title };
+      return { lat, lng, name: m.options.title, story: m.options.story };
     });
     localStorage.setItem('cowMarkers', JSON.stringify(data));
   }
@@ -153,7 +526,7 @@
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
-        data.forEach(cow => addCowMarker(cow.lat, cow.lng, cow.name));
+        data.forEach(cow => addCowMarker(cow.lat, cow.lng, cow.name, cow.story));
       } catch (e) {
         console.error('Failed to parse stored markers:', e);
       }
@@ -174,7 +547,45 @@
     const name = marker.options.title;
     const location = marker.options.location || 'Loading location...';
     const coords = marker.options.coords;
-    return `<b>${name}</b><small> (${location})</small><br><small>Coords: ${coords}</small>`;
+    const isCowStoriesEnabled = cowStoriesToggle.checked;
+    const story = marker.options.story;
+    
+    let storyContent = '';
+    if (story) {
+        storyContent = `
+            <div class="popup-content">
+                <p style="margin: 10px 0 0; text-align: left; font-size: 0.8rem; background: #f0f0f0; padding: 8px; border-radius: 8px; max-height: 100px; overflow-y: auto;">
+                    <strong>Story:</strong> ${story}
+                </p>
+                <div style="display: flex; justify-content: center; gap: 4px; margin-top: 8px;">
+                    <button id="editBtn" class="action-btn edit-action">✏️</button>
+                    <button id="deleteBtn" class="action-btn delete-action">🗑️</button>
+                    <button id="clearStoryBtn" class="action-btn delete-action" style="background: #e67e22;">🧹</button>
+                </div>
+            </div>
+        `;
+    } else if (isCowStoriesEnabled) {
+        storyContent = `
+            <div class="popup-content">
+                <div style="display: flex; justify-content: center; gap: 4px; margin-top: 8px;">
+                    <button id="editBtn" class="action-btn edit-action">✏️</button>
+                    <button id="deleteBtn" class="action-btn delete-action">🗑️</button>
+                    <button id="storyBtn" class="action-btn edit-action" style="background: #e67e22;">✨</button>
+                </div>
+            </div>
+        `;
+    } else {
+        storyContent = `
+            <div class="popup-content">
+                <div style="display: flex; justify-content: center; gap: 4px; margin-top: 8px;">
+                    <button id="editBtn" class="action-btn edit-action">✏️</button>
+                    <button id="deleteBtn" class="action-btn delete-action">🗑️</button>
+                </div>
+            </div>
+        `;
+    }
+
+    return `<b>${name}</b><small> (${location})</small><br><small>Coords: ${coords}</small>${storyContent}`;
   }
 
   function createCowIcon(active = false) {
@@ -189,14 +600,15 @@
   function resetMarker(marker) { marker.setIcon(createCowIcon()); marker.setZIndexOffset(0); }
 
   function updateInstructions() {
-    document.getElementById('instructions').textContent =
-      markers.length === 0 ? 'No cows yet—tap to add! 🐄' : 'Tap map to add more cows 🐄';
+    const instructions = document.getElementById('instructions');
+    instructions.textContent = markers.length === 0 ? 'No cows yet—tap to add! 🐄' : 'Tap map to add more cows 🐄';
   }
 
-  function addCowMarker(lat, lng, name = DEFAULT_COW_NAME) {
+  function addCowMarker(lat, lng, name = DEFAULT_COW_NAME, story = null) {
     const marker = L.marker([lat, lng], { icon: createCowIcon(), title: name }).addTo(map);
     marker.options.coords = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     marker.options.location = null;
+    marker.options.story = story;
 
     marker.bindPopup(() => getInfoContent(marker));
 
@@ -211,7 +623,10 @@
         marker.options.location = await getLocationName(lat, lng);
         if (marker.getPopup().isOpen()) {
           marker.getPopup().setContent(getInfoContent(marker));
+          setupPopupButtons(marker);
         }
+      } else {
+        setupPopupButtons(marker);
       }
     });
 
@@ -221,72 +636,93 @@
         activeMarker = null;
       }
     });
-
-    // Context menu for edit/delete
+    
     marker.on('contextmenu', () => {
       if (map._popup) map.closePopup();
-
-      const actionContent = `
-        <div style="display: flex; justify-content: center; gap: 4px;">
-          <button id="editBtn" class="action-btn edit-action">Edit</button>
-          <button id="deleteBtn" class="action-btn delete-action">Delete</button>
-        </div>`;
-
-      const actionPopup = L.popup()
-        .setLatLng(marker.getLatLng())
-        .setContent(actionContent)
-        .openOn(map);
-
-      setTimeout(() => {
-        const editBtn = document.getElementById('editBtn');
-        const deleteBtn = document.getElementById('deleteBtn');
-
-        if (editBtn) {
-          editBtn.addEventListener('click', () => {
-            openNameModal(marker.options.title, (newName) => {
-              marker.options.title = newName;
-              if (marker._icon) marker._icon.title = newName;
-              if (marker.getPopup()) {
-                marker.getPopup().setContent(getInfoContent(marker));
-                if (!marker.getPopup().isOpen()) {
-                  marker.openPopup();
-                }
-              }
-              saveMarkers(); // Save state after editing
-            });
-            map.closePopup(actionPopup);
-          });
-        }
-
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', () => {
-            if (confirm('Delete this cow?')) {
-              map.removeLayer(marker);
-              const index = markers.indexOf(marker);
-              if (index > -1) markers.splice(index, 1);
-              if (activeMarker === marker) activeMarker = null;
-              saveMarkers(); // Save state after deleting
-              updateInstructions();
-            }
-            map.closePopup(actionPopup);
-          });
-        }
-      }, 0);
+      marker.openPopup();
     });
 
     markers.push(marker);
     updateInstructions();
   }
 
+  function setupPopupButtons(marker) {
+      const popupContent = marker.getPopup().getElement();
+      if (!popupContent) return;
+
+      const editBtn = popupContent.querySelector('#editBtn');
+      const deleteBtn = popupContent.querySelector('#deleteBtn');
+      const storyBtn = popupContent.querySelector('#storyBtn');
+      const clearStoryBtn = popupContent.querySelector('#clearStoryBtn');
+
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openNameModal(marker.options.title, (newName) => {
+            marker.options.title = newName;
+            if (marker._icon) marker._icon.title = newName;
+            if (marker.getPopup()) {
+              marker.getPopup().setContent(getInfoContent(marker));
+              if (!marker.getPopup().isOpen()) {
+                marker.openPopup();
+              }
+            }
+            saveMarkers();
+          });
+          map.closePopup();
+        });
+      }
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openCustomModal('Are you sure you want to delete this cow?', (confirm) => {
+            if (confirm) {
+              if (activeMarker === marker) {
+                resetMarker(marker);
+                activeMarker = null;
+              }
+              map.removeLayer(marker);
+              const index = markers.indexOf(marker);
+              if (index > -1) markers.splice(index, 1);
+              saveMarkers();
+              updateInstructions();
+            }
+            map.closePopup();
+          }, true);
+        });
+      }
+
+      if (storyBtn) {
+        storyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            getCowStory(marker);
+        });
+      }
+
+      if (clearStoryBtn) {
+        clearStoryBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearCowStory(marker);
+        });
+      }
+  }
+
   function clearAllMarkers() {
     markers.forEach(m => map.removeLayer(m));
     markers.length = 0;
     activeMarker = null;
-    localStorage.removeItem('cowMarkers'); // Clear local storage
+    localStorage.removeItem('cowMarkers');
     updateInstructions();
   }
+  
+  function clearCowStory(marker) {
+    marker.options.story = null;
+    saveMarkers();
+    marker.getPopup().setContent(getInfoContent(marker));
+    setupPopupButtons(marker);
+  }
 
-  // Current location marker without trail (trail removed)
   let currentLocationMarker = null;
   let currentLocationWatchId = null;
   const currentLocationIcon = L.divIcon({
@@ -297,7 +733,7 @@
   });
 
   document.getElementById('locateBtn').addEventListener('click', () => {
-    if (!navigator.geolocation) return alert('Geolocation not supported.');
+    if (!navigator.geolocation) return openCustomModal('Geolocation not supported.');
 
     if (currentLocationWatchId !== null) {
       navigator.geolocation.clearWatch(currentLocationWatchId);
@@ -317,21 +753,20 @@
         currentLocationMarker.setLatLng([lat, lng]);
       }
     }, err => {
-      alert('Location error: ' + err.message);
+      openCustomModal('Location error: ' + err.message);
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
   });
 
-  // --- QR & scan ---
   const qrOverlay = document.getElementById('qrOverlay');
   const qrCodeContainer = document.getElementById('qrCodeContainer');
   document.getElementById('showQRBtn').addEventListener('click', () => {
-    if (markers.length === 0) return alert("Add some cows first!");
+    if (markers.length === 0) return openCustomModal("Add some cows first!");
     const compactData = markers.map(m => {
       const { lat, lng } = m.getLatLng();
-      return [parseFloat(lat.toFixed(5)), parseFloat(lng.toFixed(5)), m.options.title];
+      return [parseFloat(lat.toFixed(5)), parseFloat(lng.toFixed(5)), m.options.title, m.options.story || ''];
     });
     const dataString = JSON.stringify(compactData);
-    if (dataString.length > MAX_QR_DATA_LENGTH) return alert('Too many cows for reliable QR.');
+    if (dataString.length > MAX_QR_DATA_LENGTH) return openCustomModal('Too many cows for reliable QR.');
     qrCodeContainer.innerHTML = '';
     new QRCode(qrCodeContainer, { text: dataString, width: QR_SIZE, height: QR_SIZE, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.M });
     qrOverlay.classList.add('visible');
@@ -353,11 +788,11 @@
   let lastScanTime = 0;
 
   function openScanner() {
-    if (!navigator.mediaDevices) return alert('Camera not available.');
+    if (!navigator.mediaDevices) return openCustomModal('Camera not available.');
     scanOverlay.classList.add('visible');
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       .then(stream => { scanStream = stream; video.srcObject = stream; video.play(); scanLoop(); })
-      .catch(() => { alert('Camera access denied.'); closeScanner(); });
+      .catch(() => { openCustomModal('Camera access denied.'); closeScanner(); });
   }
 
   function closeScanner() {
@@ -392,8 +827,8 @@
       clearAllMarkers();
       loadedData.forEach(cow => {
         if (!Array.isArray(cow) || cow.length < 2) return;
-        const [lat, lng, name] = cow;   
-        addCowMarker(lat, lng, name || 'Imported Cow');
+        const [lat, lng, name, story] = cow;   
+        addCowMarker(lat, lng, name || 'Imported Cow', story);
       });
 
       if (markers.length > 0) {
@@ -403,18 +838,17 @@
         if (markers.length === 1) map.setZoom(SINGLE_MARKER_ZOOM);
       }
     } catch (e) {
-      alert("Could not read QR code. Invalid Cow Map format.");
+      openCustomModal("Could not read QR code. Invalid Cow Map format.");
     }
   }
 
   document.getElementById('scanQRBtn').addEventListener('click', openScanner);
 
-  // Import QR image logic
   const importQRBtn = document.getElementById('importQRBtn');
   const importQRInput = document.getElementById('importQRInput');
 
   importQRBtn.addEventListener('click', () => {
-    importQRInput.value = null;  // reset file input
+    importQRInput.value = null;
     importQRInput.click();
   });
 
@@ -430,27 +864,207 @@
         canvas.width = img.width;
         canvas.height = img.height;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const code = jsQR(imageData.data, imageData.width, imageData.height);
         if (code) {
           processQRCodeData(code.data);
         } else {
-          alert('No valid QR code found in the image.');
+          openCustomModal('No valid QR code found in the image.');
         }
       };
-      img.onerror = () => alert('Failed to load image.');
+      img.onerror = () => openCustomModal('Failed to load image.');
       img.src = event.target.result;
     };
     reader.readAsDataURL(file);
   });
 
-  document.getElementById('clearBtn').addEventListener('click', clearAllMarkers);
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    openCustomModal('Are you sure you want to clear all cow markers?', (confirm) => {
+        if (confirm) {
+            clearAllMarkers();
+        }
+    }, true);
+  });
   qrOverlay.querySelector('.popup-close-btn').addEventListener('click', () => qrOverlay.classList.remove('visible'));
   scanOverlay.querySelector('.popup-close-btn').addEventListener('click', closeScanner);
+  cowStoryOverlay.querySelector('.popup-close-btn').addEventListener('click', () => cowStoryOverlay.classList.remove('visible'));
 
-  // Name edit modal helper
-  // Creates a prompt modal with Save and Cancel buttons
+  async function getCowStory(marker) {
+    const cowName = marker.options.title;
+    const locationName = marker.options.location;
+    const lat = marker.getLatLng().lat;
+    const lng = marker.getLatLng().lng;
+
+    cowStoryText.innerHTML = 'Loading story... <span class="loading"></span>';
+    cowStoryOverlay.classList.add('visible');
+
+    let prompt = `Generate a short, creative, and fun fact or story about a cow named '${cowName}' located at '${locationName}' (${lat.toFixed(5)}, ${lng.toFixed(5)}). If the location is generic, be more creative. Keep it under 100 words.`;
+
+    let retries = 0;
+    const maxRetries = 3;
+    const baseDelay = 1000;
+
+    const callApi = async () => {
+      try {
+        const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+        const payload = { contents: chatHistory };
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`API call failed with status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+          const text = result.candidates[0].content.parts[0].text;
+          marker.options.story = text;
+          saveMarkers();
+          cowStoryOverlay.classList.remove('visible');
+          marker.getPopup().setContent(getInfoContent(marker));
+          setupPopupButtons(marker);
+        } else {
+          cowStoryText.textContent = 'Sorry, could not generate a story for this cow.';
+        }
+      } catch (error) {
+        console.error('Gemini API call error:', error);
+        if (retries < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retries);
+          retries++;
+          console.log(`Retrying in ${delay}ms...`);
+          setTimeout(callApi, delay);
+        } else {
+          cowStoryText.textContent = 'Failed to get a story. Please try again later.';
+        }
+      }
+    };
+    callApi();
+  }
+
+  sayInstructionsBtn.addEventListener('click', async () => {
+    const originalText = sayInstructionsBtn.textContent;
+    sayInstructionsBtn.textContent = '...';
+    sayInstructionsBtn.classList.add('loading');
+    sayInstructionsBtn.disabled = true;
+
+    const instructionsText = document.getElementById('instructions').textContent;
+    let prompt = `Say in a cheerful voice: "${instructionsText}"`;
+
+    const base64ToArrayBuffer = (base64) => {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    };
+
+    const pcmToWav = (pcmData, sampleRate) => {
+        const pcm16 = new Int16Array(pcmData);
+        const dataLength = pcm16.byteLength;
+        const buffer = new ArrayBuffer(44 + dataLength);
+        const view = new DataView(buffer);
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        let offset = 0;
+        writeString(view, offset, 'RIFF'); offset += 4;
+        view.setUint32(offset, 36 + dataLength, true); offset += 4;
+        writeString(view, offset, 'WAVE'); offset += 4;
+        writeString(view, offset, 'fmt '); offset += 4;
+        view.setUint32(offset, 16, true); offset += 4;
+        view.setUint16(offset, 1, true); offset += 2;
+        view.setUint16(offset, 1, true); offset += 2;
+        view.setUint32(offset, sampleRate, true); offset += 4;
+        view.setUint32(offset, sampleRate * 2, true); offset += 4;
+        view.setUint16(offset, 2, true); offset += 2;
+        view.setUint16(offset, 16, true); offset += 2;
+        writeString(view, offset, 'data'); offset += 4;
+        view.setUint32(offset, dataLength, true); offset += 4;
+
+        new Int16Array(buffer, offset).set(pcm16);
+
+        return new Blob([buffer], { type: 'audio/wav' });
+    };
+
+    let retries = 0;
+    const maxRetries = 3;
+    const baseDelay = 1000;
+
+    const callApi = async () => {
+      try {
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseModalities: ["AUDIO"],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: "Puck" }
+                    }
+                }
+            },
+            model: "gemini-2.5-flash-preview-tts"
+        };
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${API_KEY}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`API call failed with status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        const audioData = part?.inlineData?.data;
+        const mimeType = part?.inlineData?.mimeType;
+
+        if (audioData && mimeType && mimeType.startsWith("audio/")) {
+            const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
+            const pcmData = base64ToArrayBuffer(audioData);
+            const wavBlob = pcmToWav(pcmData, sampleRate);
+            const audioUrl = URL.createObjectURL(wavBlob);
+            const audio = new Audio(audioUrl);
+            audio.play().catch(e => console.error("Error playing audio:", e));
+        } else {
+            throw new Error('Invalid audio data from API.');
+        }
+      } catch (error) {
+        console.error('TTS API call error:', error);
+        if (retries < maxRetries) {
+            const delay = baseDelay * Math.pow(2, retries);
+            retries++;
+            console.log(`TTS retry in ${delay}ms...`);
+            setTimeout(callApi, delay);
+        } else {
+            openCustomModal('Failed to generate speech. Please try again later.');
+        }
+      } finally {
+        sayInstructionsBtn.textContent = originalText;
+        sayInstructionsBtn.classList.remove('loading');
+        sayInstructionsBtn.disabled = false;
+      }
+    };
+    callApi();
+  });
+
+
   function openNameModal(currentName, callback) {
     const modal = document.createElement('div');
     modal.className = 'overlay visible';
@@ -465,8 +1079,8 @@
       <h2>Edit Cow Name</h2>
       <input type="text" value="${currentName.replace(/"/g, '&quot;')}" style="width: 100%; font-size: 1.1rem; padding: 8px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 8px;" />
       <div style="display: flex; justify-content: center; gap: 12px;">
-        <button class="save-btn" style="flex-grow:1; background:#27ae60; color:white; border:none; border-radius: 14px; padding: 8px 0; font-weight:700; cursor:pointer;">Save</button>
-        <button class="cancel-btn" style="flex-grow:1; background:#e74c3c; color:white; border:none; border-radius: 14px; padding: 8px 0; font-weight:700; cursor:pointer;">Cancel</button>
+        <button class="save-btn" style="flex-grow:1;">✅</button>
+        <button class="cancel-btn" style="flex-grow:1;">❌</button>
       </div>
     `;
 
@@ -505,15 +1119,147 @@
     });
   }
 
-  // Map click adds new cow marker using modal for naming
+  function openCustomModal(message, callback = () => {}, isConfirm = false) {
+    const modal = document.createElement('div');
+    modal.className = 'overlay visible';
+    modal.style.zIndex = '100000';
+
+    const popup = document.createElement('div');
+    popup.className = 'popup';
+    popup.style.maxWidth = '300px';
+    popup.style.textAlign = 'center';
+
+    const buttonsHtml = isConfirm ? `
+      <button class="confirm-btn" style="flex-grow:1;">✅</button>
+      <button class="cancel-btn" style="flex-grow:1;">❌</button>
+    ` : `<button class="ok-btn" style="flex-grow:1;">👍</button>`;
+
+    popup.innerHTML = `
+      <p style="margin: 0 0 12px 0;">${message}</p>
+      <div style="display: flex; justify-content: center; gap: 12px;">
+        ${buttonsHtml}
+      </div>
+    `;
+
+    modal.appendChild(popup);
+    document.body.appendChild(modal);
+
+    function closeModal() {
+      document.body.removeChild(modal);
+    }
+
+    if (isConfirm) {
+        popup.querySelector('.confirm-btn').addEventListener('click', () => {
+          callback(true);
+          closeModal();
+        });
+        popup.querySelector('.cancel-btn').addEventListener('click', () => {
+          callback(false);
+          closeModal();
+        });
+    } else {
+        popup.querySelector('.ok-btn').addEventListener('click', () => {
+            callback();
+            closeModal();
+        });
+    }
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+  }
+
   map.on('click', e => {
     openNameModal(DEFAULT_COW_NAME, (name) => {
       addCowMarker(e.latlng.lat, e.latlng.lng, name);
-      saveMarkers(); // Save state after adding
+      saveMarkers();
     });
   });
 
-  // Initial setup
+  // --- Tooltip functionality ---
+  const tooltipButtons = document.querySelectorAll('[data-tooltip]');
+  let longPressTimeout;
+  let activeTooltip = null;
+
+  function showTooltip(button) {
+    const tooltipText = button.getAttribute('data-tooltip');
+    if (!tooltipText) return;
+
+    if (activeTooltip) {
+      activeTooltip.remove();
+      activeTooltip = null;
+    }
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = tooltipText;
+    document.body.appendChild(tooltip);
+
+    // After adding to the DOM, we can get its dimensions
+    const rect = button.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+
+    let topPosition = rect.top - tooltipRect.height - 10; // 10px spacing
+    let leftPosition = rect.left + (rect.width / 2);
+
+    // If the tooltip would go off the top of the screen, flip it
+    if (topPosition < 0) {
+        topPosition = rect.bottom + 10;
+        tooltip.classList.add('flipped');
+    } else {
+        tooltip.classList.remove('flipped');
+    }
+
+    // Adjust left position to not go off the side of the screen
+    if (leftPosition < tooltipRect.width / 2) {
+      leftPosition = tooltipRect.width / 2;
+    } else if (leftPosition > window.innerWidth - tooltipRect.width / 2) {
+      leftPosition = window.innerWidth - tooltipRect.width / 2;
+    }
+
+    tooltip.style.left = `${leftPosition}px`;
+    tooltip.style.top = `${topPosition}px`;
+
+    setTimeout(() => {
+      tooltip.classList.add('visible');
+    }, 10);
+    
+    activeTooltip = tooltip;
+  }
+
+  function hideTooltip() {
+    if (activeTooltip) {
+      activeTooltip.classList.remove('visible');
+      setTimeout(() => {
+        if (activeTooltip) {
+          activeTooltip.remove();
+          activeTooltip = null;
+        }
+      }, 200);
+    }
+  }
+
+  tooltipButtons.forEach(button => {
+    button.addEventListener('mouseenter', () => showTooltip(button));
+    button.addEventListener('mouseleave', hideTooltip);
+
+    button.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      longPressTimeout = setTimeout(() => {
+        showTooltip(button);
+      }, LONG_PRESS_DURATION);
+    }, { passive: false });
+
+    button.addEventListener('touchend', () => {
+      clearTimeout(longPressTimeout);
+      hideTooltip();
+    });
+
+    button.addEventListener('touchmove', () => {
+      clearTimeout(longPressTimeout);
+    });
+  });
+
   loadMarkers();
   updateInstructions();
 })();
