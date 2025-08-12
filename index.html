@@ -1,915 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Moo Moo Markers v1.3 - QR Data Sharing</title>
-  
-  <style>
-    /* Base styles */
-    * { box-sizing: border-box; }
-    body, html {
-      margin: 0; padding: 0; height: 100%; width: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-      background: #faf9f7; color: #2c3e50;
-      display: flex; flex-direction: column; overflow: hidden; 
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    
-    /* Dark mode styles */
-    body.dark-mode {
-      background: #121212;
-      color: #e0e0e0;
-    }
-    body.dark-mode nav#controls, body.dark-mode #side-menu {
-      background: #1e1e1e;
-      box-shadow: 0 -3px 10px rgba(255,255,255,0.08);
-    }
-    body.dark-mode nav#controls button {
-      box-shadow: 5px 5px 10px #0a0a0a, -5px -5px 10px #323232;
-    }
-    body.dark-mode nav#controls button:hover, body.dark-mode nav#controls button:focus {
-      box-shadow: 6px 6px 12px #0a0a0a, -6px -6px 12px #323232;
-    }
-    body.dark-mode nav#controls button:active {
-      background: #0a0a0a;
-      box-shadow: inset 2px 2px 6px #050505;
-    }
-    body.dark-mode p#instructions {
-      color: #aaaaaa;
-    }
-    body.dark-mode .popup {
-      background: #1e1e1e;
-      color: #e0e0e0;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    body.dark-mode .popup h2 {
-      color: #27ae60;
-    }
-    body.dark-mode .popup input {
-      background: #2c2c2c;
-      color: #e0e0e0;
-      border: 1px solid #444;
-    }
-    
-    /* Fix for Leaflet popup in dark mode */
-    body.dark-mode .leaflet-popup-content-wrapper {
-      background: #1e1e1e;
-      color: #e0e0e0;
-    }
-    body.dark-mode .leaflet-popup-content-wrapper .leaflet-popup-content p {
-        color: #e0e0e0;
-    }
-    body.dark-mode .leaflet-popup-tip {
-      background: #1e1e1e;
-    }
-    body.dark-mode .leaflet-popup-content small {
-      color: #aaaaaa;
-    }
-    
-    #map { flex-grow: 1; position: relative; z-index: 0; }
-    nav#controls {
-      background: #fff; 
-      box-shadow: 0 -3px 10px rgba(0,0,0,0.12);
-      padding: 10px 12px; 
-      display: flex; 
-      justify-content: center;
-      align-items: center; 
-      gap: 10px; 
-      user-select: none;
-      border-top-left-radius: 12px; 
-      border-top-right-radius: 12px;
-      z-index: 10; 
-      flex-shrink: 0;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    /* Base button style for all buttons */
-    button {
-      background: linear-gradient(145deg, #6fcf97, #27ae60);
-      border: none; 
-      color: white; 
-      font-weight: 700; 
-      font-size: 1.5rem; /* Increased font size for emojis */
-      width: 50px;
-      height: 50px; 
-      border-radius: 14px; 
-      cursor: pointer;
-      box-shadow: 5px 5px 10px #1e7c45, -5px -5px 10px #48d67f;
-      transition: all 0.2s ease; 
-      user-select: none; 
-      touch-action: manipulation;
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      text-align: center;
-      padding: 0; /* Remove padding for square buttons */
-      position: relative; /* Needed for tooltip positioning */
-    }
-    button:hover, button:focus {
-      transform: translateY(-2px);
-      box-shadow: 6px 6px 12px #196232, -6px -6px 12px #55e18f;
-      outline: none;
-    }
-    button:active { transform: translateY(1px); background: #1e7c45; box-shadow: inset 2px 2px 6px #144c2d; }
-
-    /* Specific button styles for clarity */
-    #darkModeToggleBtn.light { background: linear-gradient(145deg, #f1c40f, #f39c12); }
-    #darkModeToggleBtn.light:hover { box-shadow: 6px 6px 12px #c27c0e, -6px -6px 12px #ffc140; }
-    #darkModeToggleBtn.light:active { background: #c27c0e; box-shadow: inset 2px 2px 6px #945f0b; }
-
-    #showQRBtn, #downloadQRBtn { background: linear-gradient(145deg, #3498db, #2980b9); }
-    #showQRBtn:hover, #downloadQRBtn:hover { box-shadow: 6px 6px 12px #1f618d, -6px -6px 12px #57c0f6; }
-    #showQRBtn:active, #downloadQRBtn:active { background: #1f618d; box-shadow: inset 2px 2px 6px #14435f; }
-
-    .popup .save-btn, .popup .confirm-btn, .popup .ok-btn { background: #27ae60; font-size: 1.5rem; width: 50px; height: 50px; }
-    .popup .cancel-btn, .popup .delete-action { background: #e74c3c; font-size: 1.5rem; width: 50px; height: 50px; }
-    .popup .edit-action, .popup #insightBtn { background: #3498db; font-size: 1.5rem; width: 50px; height: 50px; }
-    .popup #clearInsightBtn { background: #e67e22; font-size: 1.5rem; width: 50px; height: 50px; }
-    
-    p#instructions {
-      text-align: center; font-size: 0.85rem; color: #555; user-select: none; margin-top: 8px; padding: 0 15px;
-      transition: color 0.3s ease;
-    }
-    .cow-marker { font-size: 30px; transition: transform 0.3s ease; cursor: pointer; user-select: none; }
-    .cow-marker.active { transform: scale(2.2); z-index: 9999; filter: drop-shadow(0 0 5px rgba(39,174,96,0.8)); }
-    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 99999; visibility: hidden; opacity: 0; transition: opacity 0.25s ease; }
-    .overlay.visible { visibility: visible; opacity: 1; }
-    .popup { background: white; padding: 20px 24px 24px 24px; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); text-align: center; max-width: 90vw; user-select: none; transition: background 0.3s ease, color 0.3s ease; }
-    .popup h2 { margin: 0 0 12px 0; font-weight: 700; color: #27ae60; transition: color 0.3s ease; }
-    #qrCodeContainer { margin: 0 auto 18px auto; max-width: 300px; max-height: 300px; }
-    .popup-close-btn { background: #e74c3c; color: white; border: none; border-radius: 14px; padding: 8px 18px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.2s ease; }
-    .popup-close-btn:hover { background: #c0392b; }
-    #video { width: 100%; max-width: 320px; border-radius: 12px; background: black; }
-    #scanMessage { margin: 12px 0 0 0; color: #333; font-size: 0.9rem; font-family: monospace; transition: color 0.3s ease; }
-    #downloadQRBtn { width: auto; height: auto; padding: 8px 18px; } /* Override square for this button */
-    
-    .leaflet-popup-content small { font-size: 0.7rem; color: #666; display: block; }
-    .action-btn { font-size: 1.5rem; padding: 0; width: 50px; height: 50px; border-radius: 14px; cursor: pointer; border: none; margin: 2px; }
-    #importQRInput { display: none; }
-    
-    /* Loading animation for buttons */
-    .loading::after {
-      content: '';
-      display: inline-block;
-      width: 1em;
-      height: 1em;
-      margin-left: 0.5em;
-      border: 2px solid rgba(255, 255, 255, 0.5);
-      border-radius: 50%;
-      border-top-color: #fff;
-      animation: spin 1s ease-in-out infinite;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    /* Hamburger Menu styles */
-    #hamburger-menu-toggle {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      font-size: 30px;
-      cursor: pointer;
-      z-index: 1000;
-      color: #2c3e50;
-      transition: color 0.3s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body.dark-mode #hamburger-menu-toggle {
-        color: #e0e0e0;
-    }
-    
-    #side-menu {
-      position: fixed;
-      top: 0;
-      right: -300px;
-      width: 300px;
-      max-width: 80vw;
-      height: 100%;
-      background: #fff;
-      box-shadow: -5px 0 15px rgba(0,0,0,0.15);
-      z-index: 999;
-      padding: 60px 20px 20px;
-      transition: right 0.3s ease-in-out;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      user-select: none;
-    }
-    
-    #side-menu.visible {
-      right: 0;
-    }
-
-    /* Version number style */
-    #version-number {
-        position: absolute;
-        bottom: 20px;
-        font-size: 0.8rem;
-        color: #999;
-        user-select: none;
-    }
-    
-    /* Splash screen specific styles */
-    #splash-screen .popup {
-        max-width: 500px;
-        text-align: left;
-    }
-    #splash-screen .popup h2 {
-        text-align: center;
-        font-size: 2rem;
-    }
-    #splash-screen .popup p {
-        font-size: 1rem;
-        line-height: 1.6;
-        margin-bottom: 20px;
-    }
-    #splash-screen .popup ul {
-        margin-bottom: 20px;
-        padding-left: 20px;
-        list-style-type: disc;
-    }
-    #splash-screen .popup li {
-        margin-bottom: 8px;
-    }
-    #splash-screen .checkbox-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 10px;
-        margin-bottom: 20px;
-        user-select: none;
-    }
-    #splash-screen .ok-btn {
-      font-size: 1rem; /* Adjusted start tapping button font size */
-      padding: 12px 24px;
-      height: auto;
-      width: auto;
-    }
-
-    /* Tooltip styles */
-    .tooltip {
-        position: fixed; /* Use fixed position for accurate placement */
-        background-color: rgba(0, 0, 0, 0.85);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        white-space: nowrap; /* Ensures the text doesn't wrap */
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-        z-index: 100000;
-        transform: translate(-50%, 0); /* Center horizontally */
-    }
-    
-    .tooltip.visible {
-        opacity: 1;
-        transform: translate(-50%, -10px);
-    }
-
-    /* Tooltip arrow */
-    .tooltip::after {
-        content: '';
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        border-width: 5px;
-        border-style: solid;
-        border-color: rgba(0, 0, 0, 0.85) transparent transparent transparent;
-    }
-
-    body.dark-mode .tooltip {
-      background-color: #e0e0e0;
-      color: #121212;
-    }
-    body.dark-mode .tooltip::after {
-      border-color: #e0e0e0 transparent transparent transparent;
-    }
-
-    /* Styles for the edit popup content */
-    .edit-popup-content {
-      text-align: center;
-    }
-
-    .edit-popup-content input {
-      width: 100%; 
-      padding: 8px; 
-      border-radius: 8px; 
-      border: 1px solid #ccc; 
-      font-size: 1rem; 
-      margin-bottom: 10px;
-    }
-
-    body.dark-mode .edit-popup-content input {
-      background: #2c2c2c;
-      color: #e0e0e0;
-      border: 1px solid #444;
-    }
-
-  </style>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Moo Moo Markers v1.3.4b - QR Data Sharing</title>
+<!-- v1.3.4b: Location tracking toggle implemented -->
+<style>
+*{box-sizing:border-box}body,html{margin:0;padding:0;height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;background:#faf9f7;color:#2c3e50;display:flex;flex-direction:column;overflow:hidden;transition:background .3s ease,color .3s ease}body.dark-mode{background:#121212;color:#e0e0e0}body.dark-mode nav#controls,body.dark-mode #side-menu{background:#1e1e1e;box-shadow:0 -3px 10px rgba(255,255,255,.08)}body.dark-mode nav#controls button{box-shadow:5px 5px 10px #0a0a0a,-5px -5px 10px #323232}body.dark-mode nav#controls button:hover,body.dark-mode nav#controls button:focus{box-shadow:6px 6px 12px #0a0a0a,-6px -6px 12px #323232}body.dark-mode nav#controls button:active{background:#0a0a0a;box-shadow:inset 2px 2px 6px #050505}body.dark-mode p#instructions{color:#aaa}body.dark-mode .popup{background:#1e1e1e;color:#e0e0e0;box-shadow:0 10px 30px rgba(0,0,0,.5)}body.dark-mode .popup h2{color:#27ae60}body.dark-mode .popup input{background:#2c2c2c;color:#e0e0e0;border:1px solid #444}#map{flex-grow:1;position:relative;z-index:0}nav#controls{background:#fff;box-shadow:0 -3px 10px rgba(0,0,0,.12);padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:10px;user-select:none;border-top-left-radius:12px;border-top-right-radius:12px;z-index:10;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;transition:background .3s ease,box-shadow .3s ease}button{background:linear-gradient(145deg,#6fcf97,#27ae60);border:none;color:#fff;font-weight:700;font-size:1.5rem;width:50px;height:50px;border-radius:14px;cursor:pointer;box-shadow:5px 5px 10px #1e7c45,-5px -5px 10px #48d67f;transition:all .2s ease;user-select:none;touch-action:manipulation;display:flex;justify-content:center;align-items:center;text-align:center;padding:0;position:relative}button:hover,button:focus{transform:translateY(-2px);box-shadow:6px 6px 12px #196232,-6px -6px 12px #55e18f;outline:none}button:active{transform:translateY(1px);background:#1e7c45;box-shadow:inset 2px 2px 6px #144c2d}#darkModeToggleBtn.light{background:linear-gradient(145deg,#f1c40f,#f39c12)}#darkModeToggleBtn.light:hover{box-shadow:6px 6px 12px #c27c0e,-6px -6px 12px #ffc140}#darkModeToggleBtn.light:active{background:#c27c0e;box-shadow:inset 2px 2px 6px #945f0b}.popup .save-btn,.popup .confirm-btn,.popup .ok-btn{background:#27ae60;font-size:1.5rem;width:50px;height:50px}.popup .cancel-btn,.popup .delete-action{background:#e74c3c;font-size:1.5rem;width:50px;height:50px}.popup .edit-action{background:#3498db;font-size:1.5rem;width:50px;height:50px}p#instructions{text-align:center;font-size:.85rem;color:#555;user-select:none;margin-top:8px;padding:0 15px}.cow-marker{font-size:30px;transition:transform .3s ease;cursor:pointer;user-select:none}.cow-marker.active{transform:scale(2.2);z-index:9999;filter:drop-shadow(0 0 5px rgba(39,174,96,.8))}.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;justify-content:center;align-items:center;z-index:99999;visibility:hidden;opacity:0;transition:opacity .25s ease}.overlay.visible{visibility:visible;opacity:1}.popup{background:#fff;padding:20px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;max-width:90vw;user-select:none}.popup h2{margin:0 0 12px;font-weight:700;color:#27ae60}#qrCodeContainer{margin:0 auto 18px;max-width:300px;max-height:300px}.popup-close-btn{background:#e74c3c;color:#fff;border:none;border-radius:14px;padding:8px 18px;font-weight:700;font-size:1rem}#video{width:100%;max-width:320px;border-radius:12px;background:#000}#scanMessage{margin:12px 0 0;color:#333;font-size:.9rem;font-family:monospace}#downloadQRBtn{width:auto;height:auto;padding:8px 18px}.leaflet-popup-content small{font-size:.7rem;color:#666;display:block}.action-btn{font-size:1.5rem;padding:0;width:50px;height:50px;border-radius:14px;cursor:pointer;border:none;margin:2px}#importQRInput{display:none}#hamburger-menu-toggle{position:fixed;top:15px;right:15px;font-size:30px;cursor:pointer;z-index:1000;color:#2c3e50}#side-menu{position:fixed;top:0;right:-300px;width:300px;max-width:80vw;height:100%;background:#fff;box-shadow:-5px 0 15px rgba(0,0,0,.15);z-index:999;padding:60px 20px 20px;transition:right .3s ease-in-out;display:flex;flex-direction:column;align-items:center;gap:20px}#side-menu.visible{right:0}#version-number{position:absolute;bottom:20px;font-size:.8rem;color:#999}#splash-screen .popup{max-width:500px;text-align:left}#splash-screen .popup h2{text-align:center;font-size:2rem}#splash-screen .popup p{font-size:1rem;line-height:1.6;margin-bottom:20px}#splash-screen .popup ul{margin-bottom:20px;padding-left:20px;list-style-type:disc}#splash-screen .popup li{margin-bottom:8px}#splash-screen .checkbox-container{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:20px}#splash-screen .ok-btn{font-size:1rem;padding:12px 24px;height:auto;width:auto}.tooltip{position:fixed;background-color:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:.8rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease-in-out,transform .2s ease-in-out;z-index:100000;transform:translate(-50%,0)}.tooltip.visible{opacity:1;transform:translate(-50%,-10px)}.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:rgba(0,0,0,.85) transparent transparent transparent}.edit-popup-content{text-align:center}.edit-popup-content input{width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1rem;margin-bottom:10px}
+/* small visual tweak for tracking button when active */
+#locateBtn.tracking{box-shadow:inset 2px 2px 6px #144c2d;background:linear-gradient(145deg,#2d9cdb,#1f6fb0)}
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
-
 <div id="map"></div>
-
 <div id="hamburger-menu-toggle">☰</div>
-
-<div id="side-menu">
-    <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
-    <div id="version-number">v1.3</div>
-</div>
-
-<nav id="controls" role="region" aria-label="Map Controls">
-  <button id="locateBtn" data-tooltip="Locate Me">📍</button>
+<div id="side-menu"><button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button><div id="version-number">v1.3.4b</div></div>
+<nav id="controls">
+  <button id="locateBtn" data-tooltip="Start Tracking">📍</button>
   <button id="showQRBtn" data-tooltip="Share Map QR">🖼️</button>
   <button id="scanQRBtn" data-tooltip="Scan QR Code">📷</button>
   <button id="importQRBtn" data-tooltip="Import Map from Image">📂</button>
-  <input type="file" id="importQRInput" accept="image/*" />
+  <input type="file" id="importQRInput" accept="image/*">
   <button id="clearBtn" data-tooltip="Clear All Cows">❌</button>
 </nav>
 <p id="instructions">Tap map to add cows 🐄</p>
 
-<!-- Splash Screen Modal -->
 <div id="splash-screen" class="overlay">
   <div class="popup">
     <h2>Welcome to Moo Moo Markers! 🐮</h2>
-    <p>This is a simple map app to drop markers, name them, and share them with friends via a QR code. Here's what you can do:</p>
+    <p>This is a simple map app to drop markers, name them, and share them with friends via a QR code.</p>
     <ul>
-        <li><b>Add Cows:</b> Tap anywhere on the map to add a new cow marker.</li>
-        <li><b>Share Maps:</b> Tap the 🖼️ button to generate a QR code of all your cow locations.</li>
-        <li><b>Import Maps:</b> Tap the 📷 or 📂 button to scan a QR code from a camera or a file to load a new map.</li>
-        <li><b>Locate Me:</b> Tap the 📍 button to find and follow your current location.</li>
+      <li><b>Add Cows:</b> Tap anywhere on the map to add a new cow marker.</li>
+      <li><b>Share Maps:</b> Tap the 🖼️ button to generate a QR code of all your cow locations.</li>
+      <li><b>Import Maps:</b> Tap the 📷 or 📂 button to scan a QR code from a camera or a file to load a new map.</li>
+      <li><b>Locate Me:</b> Tap the 📍 button to start/stop continuous location tracking.</li>
     </ul>
     <div class="checkbox-container">
-        <input type="checkbox" id="doNotShowAgainCheckbox">
-        <label for="doNotShowAgainCheckbox">Do not show this window again</label>
+      <input type="checkbox" id="doNotShowAgainCheckbox"><label for="doNotShowAgainCheckbox">Do not show this window again</label>
     </div>
     <button class="ok-btn">Start Mapping</button>
   </div>
 </div>
 
-<!-- Existing Modals -->
-<div id="qrOverlay" class="overlay"><div class="popup">
-  <h2 id="qrTitle">Share This Cow Map</h2>
-  <div id="qrCodeContainer"></div>
-  <button id="downloadQRBtn">Download QR</button>
-  <button class="popup-close-btn">✖️</button>
-</div></div>
+<div id="qrOverlay" class="overlay">
+  <div class="popup">
+    <h2 id="qrTitle">Share This Cow Map</h2>
+    <div id="qrCodeContainer"></div>
+    <button id="downloadQRBtn">Download QR</button>
+    <button class="popup-close-btn">✖️</button>
+  </div>
+</div>
 
-<div id="scanOverlay" class="overlay"><div class="popup">
-  <h2 id="scanTitle">Scan Cow Map QR Code</h2>
-  <video id="video" autoplay playsinline></video>
-  <p id="scanMessage">Point camera at a QR code</p>
-  <button class="popup-close-btn">✖️</button>
-</div></div>
-
+<div id="scanOverlay" class="overlay">
+  <div class="popup">
+    <h2 id="scanTitle">Scan Cow Map QR Code</h2>
+    <video id="video" autoplay playsinline></video>
+    <p id="scanMessage">Point camera at a QR code</p>
+    <button class="popup-close-btn">✖️</button>
+  </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
 (() => {
-  const DEFAULT_COW_NAME = 'A New Cow';
-  const SINGLE_MARKER_ZOOM = 15;
-  const CURRENT_LOCATION_ZOOM = 13;
-  const QR_SIZE = 256;
-  const MAX_QR_DATA_LENGTH = 2000;
-  const SCAN_THROTTLE_MS = 100;
-  const API_KEY = "";
-  const LONG_PRESS_DURATION = 500; // ms
+  const DEFAULT_COW_NAME='A New Cow',CURRENT_LOCATION_ZOOM=13,QR_SIZE=256,MAX_QR_DATA_LENGTH=2000,SCAN_THROTTLE_MS=100,LONG_PRESS_DURATION=500;
+  const markers=[];let activeMarker=null,isDarkMode=localStorage.getItem('darkMode')==='true',lastScanTime=0;
+  let locationMarker=null, isTracking=false;
 
-  const markers = [];
-  let activeMarker = null;
-  const body = document.body;
-  const hamburgerToggle = document.getElementById('hamburger-menu-toggle');
-  const sideMenu = document.getElementById('side-menu');
-  const darkModeToggleBtn = document.getElementById('darkModeToggleBtn');
-  const splashScreen = document.getElementById('splash-screen');
-  const doNotShowAgainCheckbox = document.getElementById('doNotShowAgainCheckbox');
-  const allPopupCloseButtons = document.querySelectorAll('.popup-close-btn');
+  // Cached DOM refs
+  const body=document.body,
+        splashScreen=document.getElementById('splash-screen'),
+        doNotShowAgainCheckbox=document.getElementById('doNotShowAgainCheckbox'),
+        darkModeToggleBtn=document.getElementById('darkModeToggleBtn'),
+        hamburgerToggle=document.getElementById('hamburger-menu-toggle'),
+        sideMenu=document.getElementById('side-menu'),
+        qrOverlay=document.getElementById('qrOverlay'),
+        qrContainer=document.getElementById('qrCodeContainer'),
+        scanOverlay=document.getElementById('scanOverlay'),
+        scanVideo=document.getElementById('video'),
+        scanMessage=document.getElementById('scanMessage'),
+        importQRInput=document.getElementById('importQRInput'),
+        locateBtn=document.getElementById('locateBtn');
 
-  let isDarkMode = localStorage.getItem('darkMode') === 'true';
-  const showSplashScreen = localStorage.getItem('showSplashScreen') !== 'false';
+  const markerToJSON=m=>{const{lat,lng}=m.getLatLng();return{lat,lng,name:m.options.title,time:m.options.timestamp};};
+  const markersToJSONString=()=>JSON.stringify(markers.map(markerToJSON));
+  const buildMarkerPopup=marker=>`<div class="marker-popup"><h3>${marker.options.title}</h3><p>${marker.options.timestamp}</p><small>${marker.options.coords}</small><div style="display:flex;justify-content:center;gap:4px;margin-top:10px;"><button id="editBtn" class="action-btn edit-action">✏️</button><button id="deleteBtn" class="action-btn delete-action">🗑️</button></div></div>`;
 
-  // --- Splash Screen Logic ---
-  if (showSplashScreen) {
-    splashScreen.classList.add('visible');
+  function saveMarkers(){localStorage.setItem('cowMarkers',markersToJSONString());}
+  function loadMarkers(){
+    const stored=localStorage.getItem('cowMarkers');if(!stored)return;
+    try{const data=JSON.parse(stored);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string'))data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time));}catch(e){console.warn('Marker load failed',e);}
   }
+  function addCowMarker(lat,lng,name=DEFAULT_COW_NAME,time=new Date().toLocaleString()){
+    const marker=L.marker([lat,lng],{icon:L.divIcon({className:'cow-marker',html:'🐄'}),title:name}).addTo(map);
+    marker.options.coords=`Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;marker.options.timestamp=time;
+    marker.bindPopup(buildMarkerPopup(marker),{closeButton:false});markers.push(marker);saveMarkers();return marker;
+  }
+  function deleteMarker(marker){marker.remove();const i=markers.indexOf(marker);if(i>-1)markers.splice(i,1);saveMarkers();activeMarker=null;}
+  function showEditNamePopup(marker){
+    const{lat,lng}=marker.getLatLng(),popupContent=document.createElement('div');popupContent.classList.add('edit-popup-content');
+    popupContent.innerHTML=`<h3>Edit Cow Name</h3><input type="text" id="cowNameInput" value="${marker.options.title}"><div style="display:flex;justify-content:center;gap:8px;"><button class="save-btn">💾</button><button class="cancel-btn">✖️</button></div>`;
+    const popup=L.popup({closeButton:false,closeOnClick:false}).setLatLng([lat,lng]).setContent(popupContent).openOn(map);
+    const nameInput=popupContent.querySelector('#cowNameInput'),saveBtn=popupContent.querySelector('.save-btn'),cancelBtn=popupContent.querySelector('.cancel-btn');
+    
+if (marker.options.title === DEFAULT_COW_NAME) {
+  nameInput.select();
+} else {
+  nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+}
+nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')saveBtn.click();});
+    saveBtn.addEventListener('click',()=>{marker.options.title=nameInput.value||DEFAULT_COW_NAME;marker.bindPopup(buildMarkerPopup(marker));popup.remove();saveMarkers();});
+    cancelBtn.addEventListener('click',()=>popup.remove());
+  }
+  function showConfirmationModal(msg,onConfirm){
+    const html=`<div id="confirmOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><div style="display:flex;justify-content:center;gap:10px;margin-top:15px;"><button class="confirm-btn">Yes</button><button class="cancel-btn">No</button></div></div></div>`;
+    body.insertAdjacentHTML('beforeend',html);const overlay=document.getElementById('confirmOverlay');overlay.querySelector('.confirm-btn').addEventListener('click',()=>{onConfirm();overlay.remove();});overlay.querySelector('.cancel-btn').addEventListener('click',()=>overlay.remove());
+  }
+  function showAlertDialog(msg){const html=`<div id="alertOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><button class="ok-btn" style="margin-top:15px;">OK</button></div></div>`;body.insertAdjacentHTML('beforeend',html);document.getElementById('alertOverlay').querySelector('.ok-btn').addEventListener('click',()=>document.getElementById('alertOverlay').remove());}
+  function stopCamera(){const s=scanVideo.srcObject;if(s){s.getTracks().forEach(t=>t.stop());scanVideo.srcObject=null;}}
+  function loadFromJSON(json){try{const data=JSON.parse(json);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){markers.forEach(m=>m.remove());markers.length=0;data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time||new Date().toLocaleString()));saveMarkers();if(markers.length>0)map.setView(markers[0].getLatLng(),CURRENT_LOCATION_ZOOM);}else showAlertDialog('Invalid QR code data format.');}catch(e){showAlertDialog('Invalid QR code data format.');}}
+  function startScan(){const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');(function tick(){if(!scanOverlay.classList.contains('visible'))return;const now=Date.now();if(now-lastScanTime<SCAN_THROTTLE_MS){requestAnimationFrame(tick);return;}lastScanTime=now;if(scanVideo.readyState===scanVideo.HAVE_ENOUGH_DATA){canvas.height=scanVideo.videoHeight;canvas.width=scanVideo.videoWidth;ctx.drawImage(scanVideo,0,0,canvas.width,canvas.height);const img=ctx.getImageData(0,0,canvas.width,canvas.height),code=jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"});if(code){try{loadFromJSON(code.data);scanOverlay.classList.remove('visible');stopCamera();}catch{scanMessage.textContent='Invalid QR code.';}}}requestAnimationFrame(tick);})();}
 
-  splashScreen.querySelector('.ok-btn').addEventListener('click', () => {
-    if (doNotShowAgainCheckbox.checked) {
-      localStorage.setItem('showSplashScreen', 'false');
-    }
-    splashScreen.classList.remove('visible');
+  // Map init
+  const map=L.map('map').setView([34.95,-120.43],10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+  
+  let ignoreNextMapClick = false;
+
+  map.on('popupclose', () => {
+    activeMarker = null;
+    ignoreNextMapClick = true;
   });
 
-  // Set initial state from local storage
-  if (isDarkMode) {
-    body.classList.add('dark-mode');
-    darkModeToggleBtn.textContent = '⚪';
-    darkModeToggleBtn.classList.remove('dark');
-    darkModeToggleBtn.classList.add('light');
-  } else {
-    darkModeToggleBtn.textContent = '⚫';
-    darkModeToggleBtn.classList.add('dark');
-    darkModeToggleBtn.classList.remove('light');
-  }
-
-  // Toggle hamburger menu visibility
-  hamburgerToggle.addEventListener('click', () => {
-    sideMenu.classList.toggle('visible');
-  });
-
-  // Toggle dark mode
-  darkModeToggleBtn.addEventListener('click', () => {
-    isDarkMode = !isDarkMode;
-    if (isDarkMode) {
-      body.classList.add('dark-mode');
-      darkModeToggleBtn.textContent = '⚪';
-      darkModeToggleBtn.classList.remove('dark');
-      darkModeToggleBtn.classList.add('light');
-    } else {
-      body.classList.remove('dark-mode');
-      darkModeToggleBtn.textContent = '⚫';
-      darkModeToggleBtn.classList.add('dark');
-      darkModeToggleBtn.classList.remove('light');
+  map.on('click', e => {
+    if (ignoreNextMapClick) {
+      ignoreNextMapClick = false;
+      return; // skip adding cow
     }
-    localStorage.setItem('darkMode', isDarkMode);
-  });
-
-  const map = L.map('map').setView([34.95, -120.43], 10);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
-
-  function saveMarkers() {
-    const data = markers.map(m => {
-      const {
-        lat,
-        lng
-      } = m.getLatLng();
-      return {
-        lat,
-        lng,
-        name: m.options.title
-      };
-    });
-    localStorage.setItem('cowMarkers', JSON.stringify(data));
-  }
-
-  function loadMarkers() {
-    const storedData = localStorage.getItem('cowMarkers');
-    if (storedData) {
-      try {
-        const data = JSON.parse(storedData);
-        data.forEach(cow => addCowMarker(cow.lat, cow.lng, cow.name));
-      } catch (e) {
-        console.error('Failed to parse stored markers:', e);
-      }
-    }
-  }
-
-  async function getLocationName(lat, lng) {
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
-      const data = await res.json();
-      return data.address.city || data.address.town || data.address.village || data.address.hamlet || 'Unknown location';
-    } catch {
-      return 'Location not found';
-    }
-  }
-
-  function getInfoContent(marker) {
-    const name = marker.options.title;
-    const location = marker.options.location || 'Loading location...';
-    const coords = marker.options.coords;
-
-    return `
-      <div class="popup-content" style="text-align: center;">
-        <h3 style="margin: 0; font-size: 1.2rem; font-weight: 600; color: #2c3e50;">${name}</h3>
-        <p style="margin: 5px 0 0; font-size: 0.9rem; color: #555;">${location}</p>
-        <small>${coords}</small>
-        <div style="display: flex; justify-content: center; gap: 4px; margin-top: 10px;">
-          <button id="editBtn" class="action-btn edit-action">✏️</button>
-          <button id="deleteBtn" class="action-btn delete-action">🗑️</button>
-        </div>
-      </div>
-    `;
-  }
-
-  function setupPopupButtons(marker) {
-    const popup = marker.getPopup().getElement();
-    if (!popup) return;
-    const editBtn = popup.querySelector('#editBtn');
-    const deleteBtn = popup.querySelector('#deleteBtn');
-
-    if (editBtn) {
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        marker.getPopup().remove();
-        showEditNamePopup(marker);
-      });
-    }
-
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showConfirmationModal("Are you sure you want to delete this marker?", () => {
-          marker.remove();
-          const index = markers.indexOf(marker);
-          if (index > -1) {
-            markers.splice(index, 1);
-          }
-          saveMarkers();
-          activeMarker = null;
-        });
-      });
-    }
-  }
-
-  function showEditNamePopup(marker) {
-    const { lat, lng } = marker.getLatLng();
-    const popupContent = document.createElement('div');
-    popupContent.classList.add('edit-popup-content');
-    popupContent.innerHTML = `
-      <h3 style="margin: 0 0 10px; font-size: 1.2rem;">Edit Cow Name</h3>
-      <input type="text" id="cowNameInput" value="${marker.options.title}" />
-      <div style="display: flex; justify-content: center; gap: 8px;">
-        <button class="save-btn">💾</button>
-        <button class="cancel-btn">✖️</button>
-      </div>
-    `;
-    const popup = L.popup({ closeButton: false, closeOnClick: false }).setLatLng([lat, lng]).setContent(popupContent).openOn(map);
-
-    const nameInput = popupContent.querySelector('#cowNameInput');
-    const saveBtn = popupContent.querySelector('.save-btn');
-    const cancelBtn = popupContent.querySelector('.cancel-btn');
-
-    nameInput.focus();
-    nameInput.addEventListener('click', (e) => e.stopPropagation());
-    nameInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        saveBtn.click();
-      }
-    });
-
-    saveBtn.addEventListener('click', () => {
-      const newName = nameInput.value || DEFAULT_COW_NAME;
-      marker.options.title = newName;
-      marker.bindPopup(getInfoContent(marker));
-      popup.remove();
-      saveMarkers();
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      popup.remove();
-    });
-  }
-
-  function addCowMarker(lat, lng, name = DEFAULT_COW_NAME) {
-    const marker = L.marker([lat, lng], {
-      icon: L.divIcon({
-        className: 'cow-marker',
-        html: '🐄'
-      }),
-      title: name,
-    }).addTo(map);
-
-    marker.options.coords = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-    getLocationName(lat, lng).then(location => {
-      marker.options.location = location;
-      if (marker.getPopup() && marker.getPopup().isOpen()) {
-        marker.getPopup().setContent(getInfoContent(marker));
-      }
-    });
-
-    const popup = L.popup({ closeButton: false }).setContent(getInfoContent(marker));
-    marker.bindPopup(popup);
-    marker.on('popupopen', () => {
-      activeMarker = marker;
-      setupPopupButtons(marker);
-    });
-    marker.on('popupclose', () => {
-      activeMarker = null;
-    });
-
-    markers.push(marker);
-    saveMarkers();
-    return marker;
-  }
-
-  map.on('click', (e) => {
     addCowMarker(e.latlng.lat, e.latlng.lng);
   });
 
-  document.getElementById('locateBtn').addEventListener('click', () => {
-    map.locate({ setView: true, maxZoom: CURRENT_LOCATION_ZOOM });
-  });
+  map.on('popupopen',e=>{const m=e.popup._source;activeMarker=m;const el=e.popup.getElement();el.querySelector('#editBtn')?.addEventListener('click',ev=>{ev.stopPropagation();map.closePopup();showEditNamePopup(m);});el.querySelector('#deleteBtn')?.addEventListener('click',ev=>{ev.stopPropagation();showConfirmationModal("Delete this marker?",()=>deleteMarker(m));});});
+  map.on('popupclose',()=>activeMarker=null);
 
-  document.getElementById('clearBtn').addEventListener('click', () => {
-    showConfirmationModal("Are you sure you want to clear all cow markers?", () => {
-      markers.forEach(marker => marker.remove());
-      markers.length = 0;
-      localStorage.removeItem('cowMarkers');
-      activeMarker = null;
-    });
-  });
-
-  function showConfirmationModal(message, onConfirm) {
-    const modalHtml = `
-      <div id="confirmOverlay" class="overlay visible">
-        <div class="popup" style="max-width: 300px;">
-          <p>${message}</p>
-          <div style="display: flex; justify-content: center; gap: 10px; margin-top: 15px;">
-            <button class="confirm-btn">Yes</button>
-            <button class="cancel-btn">No</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    const confirmOverlay = document.getElementById('confirmOverlay');
-    confirmOverlay.querySelector('.confirm-btn').addEventListener('click', () => {
-      onConfirm();
-      confirmOverlay.remove();
-    });
-    confirmOverlay.querySelector('.cancel-btn').addEventListener('click', () => {
-      confirmOverlay.remove();
-    });
-  }
-
-  allPopupCloseButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const overlay = e.target.closest('.overlay');
-      if (overlay) {
-        overlay.classList.remove('visible');
-      }
-    });
-  });
-  
-  const scanOverlay = document.getElementById('scanOverlay');
-  const scanVideo = document.getElementById('video');
-  const scanMessage = document.getElementById('scanMessage');
-
-  document.getElementById('showQRBtn').addEventListener('click', () => {
-    const data = JSON.stringify(markers.map(m => {
-      const { lat, lng } = m.getLatLng();
-      return { lat, lng, name: m.options.title };
-    }));
-    if (data.length > MAX_QR_DATA_LENGTH) {
-      showAlertDialog("Map data is too large to fit into a QR code. Please clear some markers.");
-      return;
-    }
-
-    const qrContainer = document.getElementById('qrCodeContainer');
-    qrContainer.innerHTML = '';
-    new QRCode(qrContainer, {
-      text: data,
-      width: QR_SIZE,
-      height: QR_SIZE,
-      colorDark: "#2c3e50",
-      colorLight: "#faf9f7",
-      correctLevel: QRCode.CorrectLevel.H
-    });
-
-    document.getElementById('qrOverlay').classList.add('visible');
-  });
-
-  document.getElementById('downloadQRBtn').addEventListener('click', () => {
-    const qrContainer = document.getElementById('qrCodeContainer');
-    const canvas = qrContainer.querySelector('canvas');
-    if (canvas) {
-      const url = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'moo-moo-markers.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  });
-
-  document.getElementById('scanQRBtn').addEventListener('click', () => {
-    scanOverlay.classList.add('visible');
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(stream => {
-        scanVideo.srcObject = stream;
-        scanVideo.play();
-        startScan(stream);
-      }).catch(err => {
-        console.error('Error accessing camera: ', err);
-        scanMessage.textContent = 'Error accessing camera. Please allow camera access.';
-      });
+  // Locate toggle logic
+  locateBtn.onclick=()=>{
+    if(!isTracking){
+      // start tracking
+      map.locate({ setView:true, maxZoom:CURRENT_LOCATION_ZOOM, watch:true });
+      isTracking=true;
+      locateBtn.classList.add('tracking');
+      locateBtn.dataset.tooltip='Stop Tracking';
+      locateBtn.textContent='📍';
     } else {
-      scanMessage.textContent = 'Camera not supported on this device.';
+      // stop tracking
+      map.stopLocate();
+      isTracking=false;
+      locateBtn.classList.remove('tracking');
+      locateBtn.dataset.tooltip='Start Tracking';
+      locateBtn.textContent='📍';
+      if(locationMarker){locationMarker.remove();locationMarker=null;}
+    }
+  };
+  map.on('locationfound',e=>{
+    if(!locationMarker){
+      locationMarker=L.marker(e.latlng,{icon:L.divIcon({className:'cow-marker',html:'📍'}),title:'Your Location'}).addTo(map);
+    } else {
+      locationMarker.setLatLng(e.latlng);
     }
   });
+  map.on('locationerror',()=>{showAlertDialog('Unable to get your location.'); if(isTracking){map.stopLocate();isTracking=false;locateBtn.classList.remove('tracking');locateBtn.dataset.tooltip='Start Tracking'; if(locationMarker){locationMarker.remove();locationMarker=null;}}});
 
-  let lastScanTime = 0;
-  function startScan(stream) {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    
-    function tick() {
-      if (!scanOverlay.classList.contains('visible')) {
-        return;
-      }
-      
-      const now = Date.now();
-      if (now - lastScanTime < SCAN_THROTTLE_MS) {
-        requestAnimationFrame(tick);
-        return;
-      }
-      lastScanTime = now;
-
-      if (scanVideo.readyState === scanVideo.HAVE_ENOUGH_DATA) {
-        canvas.height = scanVideo.videoHeight;
-        canvas.width = scanVideo.videoWidth;
-        context.drawImage(scanVideo, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert",
-        });
-        
-        if (code) {
-          const data = code.data;
-          try {
-            loadFromJSON(data);
-            scanOverlay.classList.remove('visible');
-            stream.getTracks().forEach(track => track.stop());
-          } catch {
-            scanMessage.textContent = 'Invalid QR code. Please try again.';
-          }
-        }
-      }
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  document.getElementById('importQRBtn').addEventListener('click', () => {
-    document.getElementById('importQRInput').click();
-  });
-
-  document.getElementById('importQRInput').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const img = new Image();
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          context.drawImage(img, 0, 0, img.width, img.height);
-          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
-          if (code) {
-            const data = code.data;
-            try {
-              loadFromJSON(data);
-            } catch {
-              showAlertDialog('Invalid QR code image.');
-            }
-          } else {
-            showAlertDialog('No QR code found in the image.');
-          }
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  function loadFromJSON(jsonString) {
-    try {
-      const data = JSON.parse(jsonString);
-      if (Array.isArray(data)) {
-        markers.forEach(marker => marker.remove());
-        markers.length = 0;
-        data.forEach(cow => addCowMarker(cow.lat, cow.lng, cow.name));
-        saveMarkers();
-        if (markers.length > 0) {
-          const firstMarker = markers[0].getLatLng();
-          map.setView(firstMarker, CURRENT_LOCATION_ZOOM);
-        }
-      } else {
-        showAlertDialog('Invalid QR code data format.');
-      }
-    } catch (e) {
-      showAlertDialog('Invalid QR code data format.');
-      console.error('Failed to parse QR code JSON:', e);
-    }
-  }
-
-  function showAlertDialog(message) {
-    const modalHtml = `
-      <div id="alertOverlay" class="overlay visible">
-        <div class="popup" style="max-width: 300px;">
-          <p>${message}</p>
-          <button class="ok-btn" style="margin-top: 15px;">OK</button>
-        </div>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    const alertOverlay = document.getElementById('alertOverlay');
-    alertOverlay.querySelector('.ok-btn').addEventListener('click', () => {
-      alertOverlay.remove();
-    });
-  }
-
-  const tooltipButtons = document.querySelectorAll('[data-tooltip]');
-  let activeTooltip = null;
-  let longPressTimeout = null;
-
-  function showTooltip(button) {
-    if (activeTooltip) {
-      activeTooltip.remove();
-      activeTooltip = null;
-    }
-    
-    const tooltipText = button.dataset.tooltip;
-    if (!tooltipText) return;
-
-    const tooltip = document.createElement('div');
-    tooltip.className = 'tooltip';
-    tooltip.textContent = tooltipText;
-    document.body.appendChild(tooltip);
-
-    const buttonRect = button.getBoundingClientRect();
-    const tooltipRect = tooltip.getBoundingClientRect();
-
-    let leftPosition = buttonRect.left + (buttonRect.width / 2);
-    let topPosition = buttonRect.top - 10;
-
-    if (leftPosition < tooltipRect.width / 2) {
-      leftPosition = tooltipRect.width / 2;
-    } else if (leftPosition > window.innerWidth - tooltipRect.width / 2) {
-      leftPosition = window.innerWidth - tooltipRect.width / 2;
-    }
-
-    tooltip.style.left = `${leftPosition}px`;
-    tooltip.style.top = `${topPosition}px`;
-
-    setTimeout(() => {
-      tooltip.classList.add('visible');
-    }, 10);
-    
-    activeTooltip = tooltip;
-  }
-
-  function hideTooltip() {
-    const tooltipToRemove = activeTooltip;
-    if (tooltipToRemove) {
-      tooltipToRemove.classList.remove('visible');
-      setTimeout(() => {
-        if (tooltipToRemove.parentNode) {
-           tooltipToRemove.remove();
-        }
-      }, 200);
-      activeTooltip = null;
-    }
-  }
-
-  tooltipButtons.forEach(button => {
-    button.addEventListener('mouseenter', () => showTooltip(button));
-    button.addEventListener('mouseleave', hideTooltip);
-
-    button.addEventListener('touchstart', (e) => {
-      // e.preventDefault(); // Removed to fix mobile tap issues
-      longPressTimeout = setTimeout(() => {
-        showTooltip(button);
-      }, LONG_PRESS_DURATION);
-    }, { passive: false });
-
-    button.addEventListener('touchend', () => {
-      clearTimeout(longPressTimeout);
-    });
-
-    button.addEventListener('touchmove', () => {
-      clearTimeout(longPressTimeout);
-      hideTooltip();
-    });
-  });
-
-  // Initial load
+  // Other UI bindings
+  document.getElementById('locateBtn').setAttribute('aria-label','Toggle location tracking');
+  document.getElementById('clearBtn').onclick=()=>showConfirmationModal("Clear all cow markers?",()=>{markers.forEach(m=>m.remove());markers.length=0;localStorage.removeItem('cowMarkers');activeMarker=null;});
+  document.getElementById('showQRBtn').onclick=()=>{const data=markersToJSONString();if(data.length>MAX_QR_DATA_LENGTH){showAlertDialog("Map data too large for QR.");return;}qrContainer.innerHTML='';new QRCode(qrContainer,{text:data,width:QR_SIZE,height:QR_SIZE,colorDark:"#2c3e50",colorLight:"#faf9f7",correctLevel:QRCode.CorrectLevel.H});qrOverlay.classList.add('visible');};
+  document.getElementById('downloadQRBtn').onclick=()=>{const c=qrContainer.querySelector('canvas');if(c){const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='moo-moo-markers-v1.3.4b.png';document.body.appendChild(a);a.click();a.remove();}};
+  document.getElementById('scanQRBtn').onclick=()=>{scanOverlay.classList.add('visible');navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(s=>{scanVideo.srcObject=s;scanVideo.play();startScan();}).catch(()=>scanMessage.textContent='Camera access error.');};
+  document.querySelectorAll('.popup-close-btn').forEach(b=>b.onclick=()=>{b.closest('.overlay').classList.remove('visible');stopCamera();});
+  document.getElementById('importQRBtn').onclick=()=>importQRInput.click();
+  importQRInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=img.width;c.height=img.height;ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,c.width,c.height),code=jsQR(d.data,d.width,d.height);if(code){try{loadFromJSON(code.data);}catch{showAlertDialog('Invalid QR code.');}}else showAlertDialog('No QR code found.');};img.src=ev.target.result;};r.readAsDataURL(file);};
+  hamburgerToggle.onclick=()=>sideMenu.classList.toggle('visible');
+  darkModeToggleBtn.onclick=()=>{isDarkMode=!isDarkMode;body.classList.toggle('dark-mode',isDarkMode);darkModeToggleBtn.textContent=isDarkMode?'⚪':'⚫';darkModeToggleBtn.classList.toggle('light',isDarkMode);darkModeToggleBtn.classList.toggle('dark',!isDarkMode);localStorage.setItem('darkMode',isDarkMode);};
+  if(localStorage.getItem('showSplashScreen')!=='false')splashScreen.classList.add('visible');
+  splashScreen.querySelector('.ok-btn').onclick=()=>{if(doNotShowAgainCheckbox.checked)localStorage.setItem('showSplashScreen','false');splashScreen.classList.remove('visible');};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.visible').forEach(o=>{o.classList.remove('visible');stopCamera();});});
+  document.querySelectorAll('[data-tooltip]').forEach(btn=>{let t,timeout;const show=()=>{if(t)t.remove();t=document.createElement('div');t.className='tooltip';t.textContent=btn.dataset.tooltip;document.body.appendChild(t);const r=btn.getBoundingClientRect(),tr=t.getBoundingClientRect();let l=r.left+r.width/2;if(l<tr.width/2)l=tr.width/2;else if(l>innerWidth-tr.width/2)l=innerWidth-tr.width/2;t.style.left=`${l}px`;t.style.top=`${r.top-10}px`;setTimeout(()=>t.classList.add('visible'),10);};const hide=()=>{if(t){t.classList.remove('visible');setTimeout(()=>t?.remove(),200);t=null;}};btn.onmouseenter=show;btn.onmouseleave=hide;btn.ontouchstart=()=>timeout=setTimeout(show,LONG_PRESS_DURATION);btn.ontouchend=()=>clearTimeout(timeout);btn.ontouchmove=()=>{clearTimeout(timeout);hide();};});
   loadMarkers();
 })();
 </script>
