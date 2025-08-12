@@ -52,10 +52,20 @@
       color: #e0e0e0;
       border: 1px solid #444;
     }
-    body.dark-mode .popup-content p {
-      background: #2c2c2c;
-      border: 1px solid #444;
+    
+    /* Fix for Leaflet popup in dark mode */
+    body.dark-mode .leaflet-popup-content-wrapper {
+      background: #1e1e1e;
       color: #e0e0e0;
+    }
+    body.dark-mode .leaflet-popup-content-wrapper .leaflet-popup-content p {
+        color: #e0e0e0;
+    }
+    body.dark-mode .leaflet-popup-tip {
+      background: #1e1e1e;
+    }
+    body.dark-mode .leaflet-popup-content small {
+      color: #aaaaaa;
     }
     
     #map { flex-grow: 1; position: relative; z-index: 0; }
@@ -286,6 +296,26 @@
       border-color: #e0e0e0 transparent transparent transparent;
     }
 
+    /* Styles for the edit popup content */
+    .edit-popup-content {
+      text-align: center;
+    }
+
+    .edit-popup-content input {
+      width: 100%; 
+      padding: 8px; 
+      border-radius: 8px; 
+      border: 1px solid #ccc; 
+      font-size: 1rem; 
+      margin-bottom: 10px;
+    }
+
+    body.dark-mode .edit-popup-content input {
+      background: #2c2c2c;
+      color: #e0e0e0;
+      border: 1px solid #444;
+    }
+
   </style>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
@@ -498,8 +528,7 @@
     if (deleteBtn) {
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const confirmDelete = true;
-        if (confirmDelete) {
+        showConfirmationModal("Are you sure you want to delete this marker?", () => {
           marker.remove();
           const index = markers.indexOf(marker);
           if (index > -1) {
@@ -507,7 +536,7 @@
           }
           saveMarkers();
           activeMarker = null;
-        }
+        });
       });
     }
   }
@@ -515,10 +544,10 @@
   function showEditNamePopup(marker) {
     const { lat, lng } = marker.getLatLng();
     const popupContent = document.createElement('div');
-    popupContent.style.textAlign = 'center';
+    popupContent.classList.add('edit-popup-content');
     popupContent.innerHTML = `
       <h3 style="margin: 0 0 10px; font-size: 1.2rem;">Edit Cow Name</h3>
-      <input type="text" id="cowNameInput" value="${marker.options.title}" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 10px;" />
+      <input type="text" id="cowNameInput" value="${marker.options.title}" />
       <div style="display: flex; justify-content: center; gap: 8px;">
         <button class="save-btn">💾</button>
         <button class="cancel-btn">✖️</button>
@@ -864,7 +893,7 @@
     button.addEventListener('mouseleave', hideTooltip);
 
     button.addEventListener('touchstart', (e) => {
-      e.preventDefault();
+      // e.preventDefault(); // Removed to fix mobile tap issues
       longPressTimeout = setTimeout(() => {
         showTooltip(button);
       }, LONG_PRESS_DURATION);
