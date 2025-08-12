@@ -3,21 +3,74 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Moo Moo Markers v1.3.4b - QR Data Sharing</title>
-<!-- v1.3.4b: Location tracking toggle implemented -->
+<title>Moo Moo Markers v1.3.5 - QR Data Sharing</title>
+<!-- v1.3.5: Fixed CSS syntax error and added logic to prevent multiple confirmation modals from appearing. -->
 <style>
-*{box-sizing:border-box}body,html{margin:0;padding:0;height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;background:#faf9f7;color:#2c3e50;display:flex;flex-direction:column;overflow:hidden;transition:background .3s ease,color .3s ease}body.dark-mode{background:#121212;color:#e0e0e0}body.dark-mode nav#controls,body.dark-mode #side-menu{background:#1e1e1e;box-shadow:0 -3px 10px rgba(255,255,255,.08)}body.dark-mode nav#controls button{box-shadow:5px 5px 10px #0a0a0a,-5px -5px 10px #323232}body.dark-mode nav#controls button:hover,body.dark-mode nav#controls button:focus{box-shadow:6px 6px 12px #0a0a0a,-6px -6px 12px #323232}body.dark-mode nav#controls button:active{background:#0a0a0a;box-shadow:inset 2px 2px 6px #050505}body.dark-mode p#instructions{color:#aaa}body.dark-mode .popup{background:#1e1e1e;color:#e0e0e0;box-shadow:0 10px 30px rgba(0,0,0,.5)}body.dark-mode .popup h2{color:#27ae60}body.dark-mode .popup input{background:#2c2c2c;color:#e0e0e0;border:1px solid #444}#map{flex-grow:1;position:relative;z-index:0}nav#controls{background:#fff;box-shadow:0 -3px 10px rgba(0,0,0,.12);padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:10px;user-select:none;border-top-left-radius:12px;border-top-right-radius:12px;z-index:10;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;transition:background .3s ease,box-shadow .3s ease}button{background:linear-gradient(145deg,#6fcf97,#27ae60);border:none;color:#fff;font-weight:700;font-size:1.5rem;width:50px;height:50px;border-radius:14px;cursor:pointer;box-shadow:5px 5px 10px #1e7c45,-5px -5px 10px #48d67f;transition:all .2s ease;user-select:none;touch-action:manipulation;display:flex;justify-content:center;align-items:center;text-align:center;padding:0;position:relative}button:hover,button:focus{transform:translateY(-2px);box-shadow:6px 6px 12px #196232,-6px -6px 12px #55e18f;outline:none}button:active{transform:translateY(1px);background:#1e7c45;box-shadow:inset 2px 2px 6px #144c2d}#darkModeToggleBtn.light{background:linear-gradient(145deg,#f1c40f,#f39c12)}#darkModeToggleBtn.light:hover{box-shadow:6px 6px 12px #c27c0e,-6px -6px 12px #ffc140}#darkModeToggleBtn.light:active{background:#c27c0e;box-shadow:inset 2px 2px 6px #945f0b}.popup .save-btn,.popup .confirm-btn,.popup .ok-btn{background:#27ae60;font-size:1.5rem;width:50px;height:50px}.popup .cancel-btn,.popup .delete-action{background:#e74c3c;font-size:1.5rem;width:50px;height:50px}.popup .edit-action{background:#3498db;font-size:1.5rem;width:50px;height:50px}p#instructions{text-align:center;font-size:.85rem;color:#555;user-select:none;margin-top:8px;padding:0 15px}.cow-marker{font-size:30px;transition:transform .3s ease;cursor:pointer;user-select:none}.cow-marker.active{transform:scale(2.2);z-index:9999;filter:drop-shadow(0 0 5px rgba(39,174,96,.8))}.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;justify-content:center;align-items:center;z-index:99999;visibility:hidden;opacity:0;transition:opacity .25s ease}.overlay.visible{visibility:visible;opacity:1}.popup{background:#fff;padding:20px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;max-width:90vw;user-select:none}.popup h2{margin:0 0 12px;font-weight:700;color:#27ae60}#qrCodeContainer{margin:0 auto 18px;max-width:300px;max-height:300px}.popup-close-btn{background:#e74c3c;color:#fff;border:none;border-radius:14px;padding:8px 18px;font-weight:700;font-size:1rem}#video{width:100%;max-width:320px;border-radius:12px;background:#000}#scanMessage{margin:12px 0 0;color:#333;font-size:.9rem;font-family:monospace}#downloadQRBtn{width:auto;height:auto;padding:8px 18px}.leaflet-popup-content small{font-size:.7rem;color:#666;display:block}.action-btn{font-size:1.5rem;padding:0;width:50px;height:50px;border-radius:14px;cursor:pointer;border:none;margin:2px}#importQRInput{display:none}#hamburger-menu-toggle{position:fixed;top:15px;right:15px;font-size:30px;cursor:pointer;z-index:1000;color:#2c3e50}#side-menu{position:fixed;top:0;right:-300px;width:300px;max-width:80vw;height:100%;background:#fff;box-shadow:-5px 0 15px rgba(0,0,0,.15);z-index:999;padding:60px 20px 20px;transition:right .3s ease-in-out;display:flex;flex-direction:column;align-items:center;gap:20px}#side-menu.visible{right:0}#version-number{position:absolute;bottom:20px;font-size:.8rem;color:#999}#splash-screen .popup{max-width:500px;text-align:left}#splash-screen .popup h2{text-align:center;font-size:2rem}#splash-screen .popup p{font-size:1rem;line-height:1.6;margin-bottom:20px}#splash-screen .popup ul{margin-bottom:20px;padding-left:20px;list-style-type:disc}#splash-screen .popup li{margin-bottom:8px}#splash-screen .checkbox-container{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:20px}#splash-screen .ok-btn{font-size:1rem;padding:12px 24px;height:auto;width:auto}.tooltip{position:fixed;background-color:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:.8rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease-in-out,transform .2s ease-in-out;z-index:100000;transform:translate(-50%,0)}.tooltip.visible{opacity:1;transform:translate(-50%,-10px)}.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:rgba(0,0,0,.85) transparent transparent transparent}.edit-popup-content{text-align:center}.edit-popup-content input{width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1rem;margin-bottom:10px}
-/* small visual tweak for tracking button when active */
-#locateBtn.tracking{box-shadow:inset 2px 2px 6px #144c2d;background:linear-gradient(145deg,#2d9cdb,#1f6fb0)}
+*{box-sizing:border-box}body,html{margin:0;padding:0;height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;background:#faf9f7;color:#2c3e50;display:flex;flex-direction:column;overflow:hidden;transition:background .3s ease,color .3s ease}body.dark-mode{background:#121212;color:#e0e0e0}body.dark-mode nav#controls,body.dark-mode #side-menu{background:#1e1e1e;box-shadow:0 -3px 10px rgba(255,255,255,.08)}body.dark-mode nav#controls button{box-shadow:5px 5px 10px #0a0a0a,-5px -5px 10px #323232}body.dark-mode nav#controls button:hover,body.dark-mode nav#controls button:focus{box-shadow:6px 6px 12px #0a0a0a,-6px -6px 12px #323232}body.dark-mode nav#controls button:active{background:#0a0a0a;box-shadow:inset 2px 2px 6px #050505}body.dark-mode p#instructions{color:#aaa}body.dark-mode .popup{background:#1e1e1e;color:#e0e0e0;box-shadow:0 10px 30px rgba(0,0,0,.5)}body.dark-mode .popup h2{color:#27ae60}body.dark-mode .popup input{background:#2c2c2c;color:#e0e0e0;border:1px solid #444}#map{flex-grow:1;position:relative;z-index:0}nav#controls{background:#fff;box-shadow:0 -3px 10px rgba(0,0,0,.12);padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:10px;user-select:none;border-top-left-radius:12px;border-top-right-radius:12px;z-index:10;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;transition:background .3s ease,box-shadow .3s ease}button{background:linear-gradient(145deg,#6fcf97,#27ae60);border:none;color:#fff;font-weight:700;font-size:1.5rem;width:50px;height:50px;border-radius:14px;cursor:pointer;box-shadow:5px 5px 10px #1e7c45,-5px -5px 10px #48d67f;transition:all .2s ease;user-select:none;touch-action:manipulation;display:flex;justify-content:center;align-items:center;text-align:center;padding:0;position:relative}button:hover,button:focus{transform:translateY(-2px);box-shadow:6px 6px 12px #196232,-6px -6px 12px #55e18f;outline:none}button:active{transform:translateY(1px);background:#1e7c45;box-shadow:inset 2px 2px 6px #144c2d}#darkModeToggleBtn.light{background:linear-gradient(145deg,#f1c40f,#f39c12)}#darkModeToggleBtn.light:hover{box-shadow:6px 6px 12px #c27c0e,-6px -6px 12px #ffc140}#darkModeToggleBtn.light:active{background:#c27c0e;box-shadow:inset 2px 2px 6px #945f0b}.popup .save-btn,.popup .confirm-btn,.popup .ok-btn{background:#27ae60;font-size:1.5rem;width:50px;height:50px}.popup .cancel-btn,.popup .delete-action{background:#e74c3c;font-size:1.5rem;width:50px;height:50px}.popup .edit-action{background:#3498db;font-size:1.5rem;width:50px;height:50px}p#instructions{text-align:center;font-size:.85rem;color:#555;user-select:none;margin-top:8px;padding:0 15px}.cow-marker{font-size:30px;transition:transform .3s ease;cursor:pointer;user-select:none}.cow-marker.active{transform:scale(2.2);z-index:9999;filter:drop-shadow(0 0 5px rgba(39,174,96,.8))}
+/* Precise vertical alignment for marker cluster icon */
+.cow-cluster-icon{
+  background:#27ae60;
+  border-radius:50%;
+  color:#fff;
+  font-weight:700;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:2px 2px 5px rgba(0,0,0,.3);
+  transition:width .2s ease,height .2s ease;
+  font-size:1.5rem; /* Set base font size for consistency */
+}
+.cow-cluster-icon .content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Use transform for precise vertical adjustment */
+  transform: translateY(2px);
+}
+.cow-cluster-icon span.count{
+  font-size: 0.8em; /* Relative to parent font-size */
+  line-height:1;
+}
+.cow-cluster-icon span.cow-emoji{
+  font-size: 1.2em; /* Relative to parent font-size */
+  line-height:1;
+}
+.cow-cluster-icon-small{font-size:.9rem;}.cow-cluster-icon-small .cow-emoji{font-size:1.2rem;}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;justify-content:center;align-items:center;z-index:99999;visibility:hidden;opacity:0;transition:opacity .25s ease}.overlay.visible{visibility:visible;opacity:1}.popup{background:#fff;padding:20px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;max-width:90vw;user-select:none}.popup h2{margin:0 0 12px;font-weight:700;color:#27ae60}#qrCodeContainer{margin:0 auto 18px;max-width:300px;max-height:300px}.popup-close-btn{background:#e74c3c;color:#fff;border:none;border-radius:14px;padding:8px 18px;font-weight:700;font-size:1rem}#video{width:100%;max-width:320px;border-radius:12px;background:#000}#scanMessage{margin:12px 0 0;color:#333;font-size:.9rem;font-family:monospace}#downloadQRBtn{width:auto;height:auto;padding:8px 18px}.leaflet-popup-content small{font-size:.7rem;color:#666;display:block}.action-btn{font-size:1.5rem;padding:0;width:50px;height:50px;border-radius:14px;cursor:pointer;border:none;margin:2px}#importQRInput{display:none}#hamburger-menu-toggle{position:fixed;top:15px;right:15px;font-size:30px;cursor:pointer;z-index:1000;color:#2c3e50}#side-menu{position:fixed;top:0;right:-300px;width:300px;max-width:80vw;height:100%;background:#fff;box-shadow:-5px 0 15px rgba(0,0,0,.15);z-index:999;padding:60px 20px 20px;transition:right .3s ease-in-out;display:flex;flex-direction:column;align-items:center;gap:20px}#side-menu.visible{right:0}#version-number{position:absolute;bottom:20px;font-size:.8rem;color:#999}#splash-screen .popup{max-width:500px;text-align:left}#splash-screen .popup h2{text-align:center;font-size:2rem}#splash-screen .popup p{font-size:1rem;line-height:1.6;margin-bottom:20px}#splash-screen .popup ul{margin-bottom:20px;padding-left:20px;list-style-type:disc}#splash-screen .popup li{margin-bottom:8px}#splash-screen .checkbox-container{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:20px}#splash-screen .ok-btn{font-size:1rem;padding:12px 24px;height:auto;width:auto}.tooltip{position:fixed;background-color:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:.8rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease-in-out,transform .2s ease-in-out;z-index:100000;transform:translate(-50%,0)}.tooltip.visible{opacity:1;transform:translate(-50%,-10px)}.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:rgba(0,0,0,.85) transparent transparent transparent}.edit-popup-content{text-align:center}.edit-popup-content input{width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1rem;margin-bottom:10px}#locateBtn.tracking{box-shadow:inset 2px 2px 6px #144c2d;background:linear-gradient(145deg,#2d9cdb,#1f6fb0}
+/* Grouping button-specific styles */
+#groupingToggleBtn{display:flex;flex-direction:column;font-size:2rem;height:60px;width:60px;border-radius:18px;}
+#groupingToggleBtn .emoji{font-size:2rem;}
+/* Styles for the "off" state of the toggle button */
+.toggle-off{
+  background:linear-gradient(145deg,#d26b5d,#e74c3c)!important;
+  box-shadow:inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;
+  transform:none!important;
+}
+.toggle-off:hover{box-shadow:inset 2px 2px 6px #943224,-6px -6px 12px #ff7866!important;transform:none!important;}
+.toggle-off:active{box-shadow:inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;transform:none!important;}
+body.dark-mode .toggle-off{box-shadow:inset 2px 2px 6px #050505,-5px -5px 10px #323232!important;background:#0a0a0a!important;}
+body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 12px #323232!important;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 </head>
 <body>
 <div id="map"></div>
 <div id="hamburger-menu-toggle">☰</div>
-<div id="side-menu"><button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button><div id="version-number">v1.3.4b</div></div>
+<div id="side-menu">
+  <!-- Dynamic sizing button has been removed as requested -->
+  <button id="groupingToggleBtn" data-tooltip="Toggle Marker Grouping">
+    <span class="emoji">🗂️</span>
+  </button>
+  <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
+  <div id="version-number">v1.3.5</div>
+</div>
 <nav id="controls">
   <button id="locateBtn" data-tooltip="Start Tracking">📍</button>
   <button id="showQRBtn" data-tooltip="Share Map QR">🖼️</button>
@@ -26,7 +79,7 @@
   <input type="file" id="importQRInput" accept="image/*">
   <button id="clearBtn" data-tooltip="Clear All Cows">❌</button>
 </nav>
-<p id="instructions">Tap map to add cows 🐄</p>
+<p id="instructions">Tap the map to add a new cow marker. You'll be asked to confirm. 🐄</p>
 
 <div id="splash-screen" class="overlay">
   <div class="popup">
@@ -64,17 +117,22 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script>
 (() => {
   const DEFAULT_COW_NAME='A New Cow',CURRENT_LOCATION_ZOOM=13,QR_SIZE=256,MAX_QR_DATA_LENGTH=2000,SCAN_THROTTLE_MS=100,LONG_PRESS_DURATION=500;
   const markers=[];let activeMarker=null,isDarkMode=localStorage.getItem('darkMode')==='true',lastScanTime=0;
   let locationMarker=null, isTracking=false;
+  let isGroupingEnabled=localStorage.getItem('groupingEnabled')!=='false';
 
   // Cached DOM refs
   const body=document.body,
         splashScreen=document.getElementById('splash-screen'),
         doNotShowAgainCheckbox=document.getElementById('doNotShowAgainCheckbox'),
         darkModeToggleBtn=document.getElementById('darkModeToggleBtn'),
+        groupingToggleBtn=document.getElementById('groupingToggleBtn'),
         hamburgerToggle=document.getElementById('hamburger-menu-toggle'),
         sideMenu=document.getElementById('side-menu'),
         qrOverlay=document.getElementById('qrOverlay'),
@@ -83,7 +141,14 @@
         scanVideo=document.getElementById('video'),
         scanMessage=document.getElementById('scanMessage'),
         importQRInput=document.getElementById('importQRInput'),
-        locateBtn=document.getElementById('locateBtn');
+        locateBtn=document.getElementById('locateBtn'),
+        instructionsText = document.getElementById('instructions');
+  
+  // All other control buttons.
+  const showQRBtn = document.getElementById('showQRBtn');
+  const scanQRBtn = document.getElementById('scanQRBtn');
+  const importQRBtn = document.getElementById('importQRBtn');
+  const clearBtn = document.getElementById('clearBtn');
 
   const markerToJSON=m=>{const{lat,lng}=m.getLatLng();return{lat,lng,name:m.options.title,time:m.options.timestamp};};
   const markersToJSONString=()=>JSON.stringify(markers.map(markerToJSON));
@@ -92,26 +157,47 @@
   function saveMarkers(){localStorage.setItem('cowMarkers',markersToJSONString());}
   function loadMarkers(){
     const stored=localStorage.getItem('cowMarkers');if(!stored)return;
-    try{const data=JSON.parse(stored);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string'))data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time));}catch(e){console.warn('Marker load failed',e);}
+    try{const data=JSON.parse(stored);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){
+      markers.length=0;
+      data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time));
+    }}catch(e){console.warn('Marker load failed',e);}
   }
   function addCowMarker(lat,lng,name=DEFAULT_COW_NAME,time=new Date().toLocaleString()){
-    const marker=L.marker([lat,lng],{icon:L.divIcon({className:'cow-marker',html:'🐄'}),title:name}).addTo(map);
+    const marker=L.marker([lat,lng],{icon:L.divIcon({className:'cow-marker',html:'🐄'}),title:name});
     marker.options.coords=`Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;marker.options.timestamp=time;
-    marker.bindPopup(buildMarkerPopup(marker),{closeButton:false});markers.push(marker);saveMarkers();return marker;
+    marker.bindPopup(buildMarkerPopup(marker),{closeButton:false});
+    markers.push(marker);
+    if (isGroupingEnabled) {
+      cowMarkers.addLayer(marker);
+    } else {
+      marker.addTo(map);
+    }
+    saveMarkers();
+    return marker;
   }
-  function deleteMarker(marker){marker.remove();const i=markers.indexOf(marker);if(i>-1)markers.splice(i,1);saveMarkers();activeMarker=null;}
+  function deleteMarker(marker){
+    if (isGroupingEnabled) {
+      cowMarkers.removeLayer(marker);
+    } else {
+      map.removeLayer(marker);
+    }
+    const i=markers.indexOf(marker);
+    if(i>-1)markers.splice(i,1);
+    saveMarkers();
+    activeMarker=null;
+  }
   function showEditNamePopup(marker){
     const{lat,lng}=marker.getLatLng(),popupContent=document.createElement('div');popupContent.classList.add('edit-popup-content');
     popupContent.innerHTML=`<h3>Edit Cow Name</h3><input type="text" id="cowNameInput" value="${marker.options.title}"><div style="display:flex;justify-content:center;gap:8px;"><button class="save-btn">💾</button><button class="cancel-btn">✖️</button></div>`;
     const popup=L.popup({closeButton:false,closeOnClick:false}).setLatLng([lat,lng]).setContent(popupContent).openOn(map);
     const nameInput=popupContent.querySelector('#cowNameInput'),saveBtn=popupContent.querySelector('.save-btn'),cancelBtn=popupContent.querySelector('.cancel-btn');
     
-if (marker.options.title === DEFAULT_COW_NAME) {
-  nameInput.select();
-} else {
-  nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
-}
-nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')saveBtn.click();});
+    if (marker.options.title === DEFAULT_COW_NAME) {
+      nameInput.select();
+    } else {
+      nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+    }
+    nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')saveBtn.click();});
     saveBtn.addEventListener('click',()=>{marker.options.title=nameInput.value||DEFAULT_COW_NAME;marker.bindPopup(buildMarkerPopup(marker));popup.remove();saveMarkers();});
     cancelBtn.addEventListener('click',()=>popup.remove());
   }
@@ -121,14 +207,38 @@ nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nam
   }
   function showAlertDialog(msg){const html=`<div id="alertOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><button class="ok-btn" style="margin-top:15px;">OK</button></div></div>`;body.insertAdjacentHTML('beforeend',html);document.getElementById('alertOverlay').querySelector('.ok-btn').addEventListener('click',()=>document.getElementById('alertOverlay').remove());}
   function stopCamera(){const s=scanVideo.srcObject;if(s){s.getTracks().forEach(t=>t.stop());scanVideo.srcObject=null;}}
-  function loadFromJSON(json){try{const data=JSON.parse(json);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){markers.forEach(m=>m.remove());markers.length=0;data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time||new Date().toLocaleString()));saveMarkers();if(markers.length>0)map.setView(markers[0].getLatLng(),CURRENT_LOCATION_ZOOM);}else showAlertDialog('Invalid QR code data format.');}catch(e){showAlertDialog('Invalid QR code data format.');}}
+  function loadFromJSON(json){try{const data=JSON.parse(json);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){
+    markers.forEach(m=>{if(isGroupingEnabled){cowMarkers.removeLayer(m);}else{map.removeLayer(m);}});markers.length=0;
+    cowMarkers.clearLayers();
+    data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time||new Date().toLocaleString()));
+    saveMarkers();if(markers.length>0)map.setView(markers[0].getLatLng(),CURRENT_LOCATION_ZOOM);}else showAlertDialog('Invalid QR code data format.');}catch(e){showAlertDialog('Invalid QR code data format.');}
+  }
   function startScan(){const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');(function tick(){if(!scanOverlay.classList.contains('visible'))return;const now=Date.now();if(now-lastScanTime<SCAN_THROTTLE_MS){requestAnimationFrame(tick);return;}lastScanTime=now;if(scanVideo.readyState===scanVideo.HAVE_ENOUGH_DATA){canvas.height=scanVideo.videoHeight;canvas.width=scanVideo.videoWidth;ctx.drawImage(scanVideo,0,0,canvas.width,canvas.height);const img=ctx.getImageData(0,0,canvas.width,canvas.height),code=jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"});if(code){try{loadFromJSON(code.data);scanOverlay.classList.remove('visible');stopCamera();}catch{scanMessage.textContent='Invalid QR code.';}}}requestAnimationFrame(tick);})();}
 
   // Map init
   const map=L.map('map').setView([34.95,-120.43],10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
 
-  
+  // Initialize marker cluster group with custom icon. This version uses a fixed-size icon.
+  const cowMarkers = L.markerClusterGroup({
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      const size = 50;
+      const className = 'cow-cluster-icon';
+      
+      return L.divIcon({
+        html: `<div class="content-wrapper"><span class="cow-emoji">🐄</span><span class="count">${count}</span></div>`,
+        className: className,
+        iconSize: [size, size]
+      });
+    }
+  });
+
+  // Initial state for grouping
+  if (isGroupingEnabled) {
+    map.addLayer(cowMarkers);
+  }
+
   let ignoreNextMapClick = false;
 
   map.on('popupclose', () => {
@@ -139,33 +249,42 @@ nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nam
   map.on('click', e => {
     if (ignoreNextMapClick) {
       ignoreNextMapClick = false;
-      return; // skip adding cow
+      return;
     }
-    addCowMarker(e.latlng.lat, e.latlng.lng);
+    // Prevent adding a marker if any modal is currently visible
+    if(document.querySelector('.overlay.visible')) return;
+    
+    showConfirmationModal("Add a new cow marker here?", () => {
+        addCowMarker(e.latlng.lat, e.latlng.lng);
+    });
   });
 
   map.on('popupopen',e=>{const m=e.popup._source;activeMarker=m;const el=e.popup.getElement();el.querySelector('#editBtn')?.addEventListener('click',ev=>{ev.stopPropagation();map.closePopup();showEditNamePopup(m);});el.querySelector('#deleteBtn')?.addEventListener('click',ev=>{ev.stopPropagation();showConfirmationModal("Delete this marker?",()=>deleteMarker(m));});});
   map.on('popupclose',()=>activeMarker=null);
 
   // Locate toggle logic
-  locateBtn.onclick=()=>{
-    if(!isTracking){
-      // start tracking
-      map.locate({ setView:true, maxZoom:CURRENT_LOCATION_ZOOM, watch:true });
-      isTracking=true;
-      locateBtn.classList.add('tracking');
-      locateBtn.dataset.tooltip='Stop Tracking';
-      locateBtn.textContent='📍';
-    } else {
-      // stop tracking
-      map.stopLocate();
-      isTracking=false;
-      locateBtn.classList.remove('tracking');
-      locateBtn.dataset.tooltip='Start Tracking';
-      locateBtn.textContent='📍';
-      if(locationMarker){locationMarker.remove();locationMarker=null;}
-    }
-  };
+  if (locateBtn) {
+    locateBtn.onclick=()=>{
+      if(!isTracking){
+        // start tracking
+        map.locate({ setView:true, maxZoom:CURRENT_LOCATION_ZOOM, watch:true });
+        isTracking=true;
+        locateBtn.classList.add('tracking');
+        locateBtn.dataset.tooltip='Stop Tracking';
+        locateBtn.textContent='📍';
+      } else {
+        // stop tracking
+        map.stopLocate();
+        isTracking=false;
+        locateBtn.classList.remove('tracking');
+        locateBtn.dataset.tooltip='Start Tracking';
+        locateBtn.textContent='📍';
+        if(locationMarker){locationMarker.remove();locationMarker=null;}
+      }
+    };
+    locateBtn.setAttribute('aria-label','Toggle location tracking');
+  }
+
   map.on('locationfound',e=>{
     if(!locationMarker){
       locationMarker=L.marker(e.latlng,{icon:L.divIcon({className:'cow-marker',html:'📍'}),title:'Your Location'}).addTo(map);
@@ -173,23 +292,90 @@ nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nam
       locationMarker.setLatLng(e.latlng);
     }
   });
-  map.on('locationerror',()=>{showAlertDialog('Unable to get your location.'); if(isTracking){map.stopLocate();isTracking=false;locateBtn.classList.remove('tracking');locateBtn.dataset.tooltip='Start Tracking'; if(locationMarker){locationMarker.remove();locationMarker=null;}}});
+  map.on('locationerror',()=>{showAlertDialog('Unable to get your location.'); if(isTracking){map.stopLocate();isTracking=false;if (locateBtn) {locateBtn.classList.remove('tracking');locateBtn.dataset.tooltip='Start Tracking';} if(locationMarker){locationMarker.remove();locationMarker=null;}}});
 
   // Other UI bindings
-  document.getElementById('locateBtn').setAttribute('aria-label','Toggle location tracking');
-  document.getElementById('clearBtn').onclick=()=>showConfirmationModal("Clear all cow markers?",()=>{markers.forEach(m=>m.remove());markers.length=0;localStorage.removeItem('cowMarkers');activeMarker=null;});
-  document.getElementById('showQRBtn').onclick=()=>{const data=markersToJSONString();if(data.length>MAX_QR_DATA_LENGTH){showAlertDialog("Map data too large for QR.");return;}qrContainer.innerHTML='';new QRCode(qrContainer,{text:data,width:QR_SIZE,height:QR_SIZE,colorDark:"#2c3e50",colorLight:"#faf9f7",correctLevel:QRCode.CorrectLevel.H});qrOverlay.classList.add('visible');};
-  document.getElementById('downloadQRBtn').onclick=()=>{const c=qrContainer.querySelector('canvas');if(c){const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='moo-moo-markers-v1.3.4b.png';document.body.appendChild(a);a.click();a.remove();}};
-  document.getElementById('scanQRBtn').onclick=()=>{scanOverlay.classList.add('visible');navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(s=>{scanVideo.srcObject=s;scanVideo.play();startScan();}).catch(()=>scanMessage.textContent='Camera access error.');};
+  if (clearBtn) {
+    clearBtn.onclick=()=>showConfirmationModal("Clear all cow markers?",()=>{
+      if (isGroupingEnabled) {
+        cowMarkers.clearLayers();
+      } else {
+        markers.forEach(m=>map.removeLayer(m));
+      }
+      markers.length=0;
+      localStorage.removeItem('cowMarkers');activeMarker=null;
+    });
+  }
+  if (showQRBtn) {
+    showQRBtn.onclick=()=>{const data=markersToJSONString();if(data.length>MAX_QR_DATA_LENGTH){showAlertDialog("Map data too large for QR.");return;}qrContainer.innerHTML='';new QRCode(qrContainer,{text:data,width:QR_SIZE,height:QR_SIZE,colorDark:"#2c3e50",colorLight:"#faf9f7",correctLevel:QRCode.CorrectLevel.H});qrOverlay.classList.add('visible');};
+  }
+  if (scanQRBtn) {
+    scanQRBtn.onclick=()=>{scanOverlay.classList.add('visible');navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(s=>{scanVideo.srcObject=s;scanVideo.play();startScan();}).catch(()=>scanMessage.textContent='Camera access error.');};
+  }
   document.querySelectorAll('.popup-close-btn').forEach(b=>b.onclick=()=>{b.closest('.overlay').classList.remove('visible');stopCamera();});
-  document.getElementById('importQRBtn').onclick=()=>importQRInput.click();
-  importQRInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=img.width;c.height=img.height;ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,c.width,c.height),code=jsQR(d.data,d.width,d.height);if(code){try{loadFromJSON(code.data);}catch{showAlertDialog('Invalid QR code.');}}else showAlertDialog('No QR code found.');};img.src=ev.target.result;};r.readAsDataURL(file);};
-  hamburgerToggle.onclick=()=>sideMenu.classList.toggle('visible');
-  darkModeToggleBtn.onclick=()=>{isDarkMode=!isDarkMode;body.classList.toggle('dark-mode',isDarkMode);darkModeToggleBtn.textContent=isDarkMode?'⚪':'⚫';darkModeToggleBtn.classList.toggle('light',isDarkMode);darkModeToggleBtn.classList.toggle('dark',!isDarkMode);localStorage.setItem('darkMode',isDarkMode);};
-  if(localStorage.getItem('showSplashScreen')!=='false')splashScreen.classList.add('visible');
-  splashScreen.querySelector('.ok-btn').onclick=()=>{if(doNotShowAgainCheckbox.checked)localStorage.setItem('showSplashScreen','false');splashScreen.classList.remove('visible');};
+  if (importQRBtn) {
+    importQRBtn.onclick=()=>importQRInput.click();
+  }
+  if (importQRInput) {
+    importQRInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=img.width;c.height=img.height;ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,c.width,c.height),code=jsQR(d.data,d.width,d.height);if(code){try{loadFromJSON(code.data);}catch{showAlertDialog('Invalid QR code.');}}else showAlertDialog('No QR code found.');};img.src=ev.target.result;};r.readAsDataURL(file);};
+  }
+  if (hamburgerToggle) {
+    hamburgerToggle.onclick=()=>sideMenu.classList.toggle('visible');
+  }
+  if (darkModeToggleBtn) {
+    darkModeToggleBtn.onclick=()=>{isDarkMode=!isDarkMode;body.classList.toggle('dark-mode',isDarkMode);darkModeToggleBtn.textContent=isDarkMode?'⚪':'⚫';darkModeToggleBtn.classList.toggle('light',isDarkMode);darkModeToggleBtn.classList.toggle('dark',!isDarkMode);localStorage.setItem('darkMode',isDarkMode);};
+  }
+  
+  // Grouping Toggle
+  const updateGroupingBtn = () => {
+    if (!groupingToggleBtn) {
+        console.error('Error: "groupingToggleBtn" element not found.');
+        return;
+    }
+    groupingToggleBtn.classList.toggle('toggle-off', !isGroupingEnabled);
+    groupingToggleBtn.dataset.tooltip = `Toggle Marker Grouping (${isGroupingEnabled ? 'On' : 'Off'})`;
+    // Change the emoji based on the state
+    const emojiSpan = groupingToggleBtn.querySelector('.emoji');
+    if (emojiSpan) {
+        emojiSpan.textContent = isGroupingEnabled ? '🗂️' : '📁';
+    }
+  };
+  
+  // Check if the button element exists before trying to assign an event handler and call the function initially
+  if (groupingToggleBtn) {
+      groupingToggleBtn.onclick = () => {
+        isGroupingEnabled = !isGroupingEnabled;
+        localStorage.setItem('groupingEnabled', isGroupingEnabled);
+        updateGroupingBtn();
+        if (isGroupingEnabled) {
+          // Grouping is now ON, add all markers to the cluster group and remove from map
+          markers.forEach(m => {
+            if(map.hasLayer(m)) map.removeLayer(m);
+          });
+          cowMarkers.addLayers(markers);
+        } else {
+          // Grouping is now OFF, remove all markers from the cluster group and add to map
+          cowMarkers.clearLayers();
+          markers.forEach(m => {
+            m.addTo(map);
+          });
+        }
+      };
+      updateGroupingBtn();
+  }
+
+  // Splash screen and tooltip bindings with null checks
+  if(localStorage.getItem('showSplashScreen')!=='false' && splashScreen) splashScreen.classList.add('visible');
+  const okBtn = splashScreen ? splashScreen.querySelector('.ok-btn') : null;
+  if(okBtn) {
+    okBtn.onclick = ()=>{if(doNotShowAgainCheckbox.checked)localStorage.setItem('showSplashScreen','false');splashScreen.classList.remove('visible');};
+  }
   document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.visible').forEach(o=>{o.classList.remove('visible');stopCamera();});});
   document.querySelectorAll('[data-tooltip]').forEach(btn=>{let t,timeout;const show=()=>{if(t)t.remove();t=document.createElement('div');t.className='tooltip';t.textContent=btn.dataset.tooltip;document.body.appendChild(t);const r=btn.getBoundingClientRect(),tr=t.getBoundingClientRect();let l=r.left+r.width/2;if(l<tr.width/2)l=tr.width/2;else if(l>innerWidth-tr.width/2)l=innerWidth-tr.width/2;t.style.left=`${l}px`;t.style.top=`${r.top-10}px`;setTimeout(()=>t.classList.add('visible'),10);};const hide=()=>{if(t){t.classList.remove('visible');setTimeout(()=>t?.remove(),200);t=null;}};btn.onmouseenter=show;btn.onmouseleave=hide;btn.ontouchstart=()=>timeout=setTimeout(show,LONG_PRESS_DURATION);btn.ontouchend=()=>clearTimeout(timeout);btn.ontouchmove=()=>{clearTimeout(timeout);hide();};});
+  
+  if (body) {
+      body.classList.toggle('dark-mode',isDarkMode);
+  }
   loadMarkers();
 })();
 </script>
