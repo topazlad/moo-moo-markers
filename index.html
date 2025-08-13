@@ -6,6 +6,7 @@
 <title>Moo Moo Markers v1.3.5 - QR Data Sharing</title>
 <!-- v1.3.5: Fixed CSS syntax error and added logic to prevent multiple confirmation modals from appearing. -->
 <style>
+/* Reset and basic styles */
 *{box-sizing:border-box}body,html{margin:0;padding:0;height:100%;width:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;background:#faf9f7;color:#2c3e50;display:flex;flex-direction:column;overflow:hidden;transition:background .3s ease,color .3s ease}body.dark-mode{background:#121212;color:#e0e0e0}body.dark-mode nav#controls,body.dark-mode #side-menu{background:#1e1e1e;box-shadow:0 -3px 10px rgba(255,255,255,.08)}body.dark-mode nav#controls button{box-shadow:5px 5px 10px #0a0a0a,-5px -5px 10px #323232}body.dark-mode nav#controls button:hover,body.dark-mode nav#controls button:focus{box-shadow:6px 6px 12px #0a0a0a,-6px -6px 12px #323232}body.dark-mode nav#controls button:active{background:#0a0a0a;box-shadow:inset 2px 2px 6px #050505}body.dark-mode p#instructions{color:#aaa}body.dark-mode .popup{background:#1e1e1e;color:#e0e0e0;box-shadow:0 10px 30px rgba(0,0,0,.5)}body.dark-mode .popup h2{color:#27ae60}body.dark-mode .popup input{background:#2c2c2c;color:#e0e0e0;border:1px solid #444}#map{flex-grow:1;position:relative;z-index:0}nav#controls{background:#fff;box-shadow:0 -3px 10px rgba(0,0,0,.12);padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:10px;user-select:none;border-top-left-radius:12px;border-top-right-radius:12px;z-index:10;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;transition:background .3s ease,box-shadow .3s ease}button{background:linear-gradient(145deg,#6fcf97,#27ae60);border:none;color:#fff;font-weight:700;font-size:1.5rem;width:50px;height:50px;border-radius:14px;cursor:pointer;box-shadow:5px 5px 10px #1e7c45,-5px -5px 10px #48d67f;transition:all .2s ease;user-select:none;touch-action:manipulation;display:flex;justify-content:center;align-items:center;text-align:center;padding:0;position:relative}button:hover,button:focus{transform:translateY(-2px);box-shadow:6px 6px 12px #196232,-6px -6px 12px #55e18f;outline:none}button:active{transform:translateY(1px);background:#1e7c45;box-shadow:inset 2px 2px 6px #144c2d}#darkModeToggleBtn.light{background:linear-gradient(145deg,#f1c40f,#f39c12)}#darkModeToggleBtn.light:hover{box-shadow:6px 6px 12px #c27c0e,-6px -6px 12px #ffc140}#darkModeToggleBtn.light:active{background:#c27c0e;box-shadow:inset 2px 2px 6px #945f0b}.popup .save-btn,.popup .confirm-btn,.popup .ok-btn{background:#27ae60;font-size:1.5rem;width:50px;height:50px}.popup .cancel-btn,.popup .delete-action{background:#e74c3c;font-size:1.5rem;width:50px;height:50px}.popup .edit-action{background:#3498db;font-size:1.5rem;width:50px;height:50px}p#instructions{text-align:center;font-size:.85rem;color:#555;user-select:none;margin-top:8px;padding:0 15px}.cow-marker{font-size:30px;transition:transform .3s ease;cursor:pointer;user-select:none}.cow-marker.active{transform:scale(2.2);z-index:9999;filter:drop-shadow(0 0 5px rgba(39,174,96,.8))}
 /* Precise vertical alignment for marker cluster icon */
 .cow-cluster-icon{
@@ -37,7 +38,8 @@
   line-height:1;
 }
 .cow-cluster-icon-small{font-size:.9rem;}.cow-cluster-icon-small .cow-emoji{font-size:1.2rem;}
-.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;justify-content:center;align-items:center;z-index:99999;visibility:hidden;opacity:0;transition:opacity .25s ease}.overlay.visible{visibility:visible;opacity:1}.popup{background:#fff;padding:20px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;max-width:90vw;user-select:none}.popup h2{margin:0 0 12px;font-weight:700;color:#27ae60}#qrCodeContainer{margin:0 auto 18px;max-width:300px;max-height:300px}.popup-close-btn{background:#e74c3c;color:#fff;border:none;border-radius:14px;padding:8px 18px;font-weight:700;font-size:1rem}#video{width:100%;max-width:320px;border-radius:12px;background:#000}#scanMessage{margin:12px 0 0;color:#333;font-size:.9rem;font-family:monospace}#downloadQRBtn{width:auto;height:auto;padding:8px 18px}.leaflet-popup-content small{font-size:.7rem;color:#666;display:block}.action-btn{font-size:1.5rem;padding:0;width:50px;height:50px;border-radius:14px;cursor:pointer;border:none;margin:2px}#importQRInput{display:none}#hamburger-menu-toggle{position:fixed;top:15px;right:15px;font-size:30px;cursor:pointer;z-index:1000;color:#2c3e50}#side-menu{position:fixed;top:0;right:-300px;width:300px;max-width:80vw;height:100%;background:#fff;box-shadow:-5px 0 15px rgba(0,0,0,.15);z-index:999;padding:60px 20px 20px;transition:right .3s ease-in-out;display:flex;flex-direction:column;align-items:center;gap:20px}#side-menu.visible{right:0}#version-number{position:absolute;bottom:20px;font-size:.8rem;color:#999}#splash-screen .popup{max-width:500px;text-align:left}#splash-screen .popup h2{text-align:center;font-size:2rem}#splash-screen .popup p{font-size:1rem;line-height:1.6;margin-bottom:20px}#splash-screen .popup ul{margin-bottom:20px;padding-left:20px;list-style-type:disc}#splash-screen .popup li{margin-bottom:8px}#splash-screen .checkbox-container{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:20px}#splash-screen .ok-btn{font-size:1rem;padding:12px 24px;height:auto;width:auto}.tooltip{position:fixed;background-color:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:.8rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease-in-out,transform .2s ease-in-out;z-index:100000;transform:translate(-50%,0)}.tooltip.visible{opacity:1;transform:translate(-50%,-10px)}.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:rgba(0,0,0,.85) transparent transparent transparent}.edit-popup-content{text-align:center}.edit-popup-content input{width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1rem;margin-bottom:10px}#locateBtn.tracking{box-shadow:inset 2px 2px 6px #144c2d;background:linear-gradient(145deg,#2d9cdb,#1f6fb0}
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;justify-content:center;align-items:center;z-index:99999;visibility:hidden;opacity:0;transition:opacity .25s ease}.overlay.visible{visibility:visible;opacity:1}.popup{background:#fff;padding:20px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;max-width:90vw;user-select:none}.popup h2{margin:0 0 12px;font-weight:700;color:#27ae60}#qrCodeContainer{margin:0 auto 18px;max-width:300px;max-height:300px}.popup-close-btn{background:#e74c3c;color:#fff;border:none;border-radius:14px;padding:8px 18px;font-weight:700;font-size:1rem}#video{width:100%;max-width:320px;border-radius:12px;background:#000}#scanMessage{margin:12px 0 0;color:#333;font-size:.9rem;font-family:monospace}#downloadQRBtn{width:auto;height:auto;padding:8px 18px}#shareFeedBtn{background:linear-gradient(145deg, #a7a7a7, #7a7a7a);}.dark-mode #shareFeedBtn{background:linear-gradient(145deg, #444, #222);}
+.leaflet-popup-content small{font-size:.7rem;color:#666;display:block}.action-btn{font-size:1.5rem;padding:0;width:50px;height:50px;border-radius:14px;cursor:pointer;border:none;margin:2px}#importQRInput{display:none}#hamburger-menu-toggle{position:fixed;top:15px;right:15px;font-size:30px;cursor:pointer;z-index:1000;color:#2c3e50}#side-menu{position:fixed;top:0;right:-200px;width:200px;max-width:80vw;height:100%;background:#fff;box-shadow:-5px 0 15px rgba(0,0,0,.15);z-index:999;padding:60px 20px 20px;transition:right .3s ease-in-out;display:flex;flex-direction:column;align-items:center;gap:20px}#side-menu.visible{right:0}#version-number{position:absolute;bottom:20px;font-size:.8rem;color:#999}#splash-screen .popup{max-width:500px;text-align:left}#splash-screen .popup h2{text-align:center;font-size:2rem}#splash-screen .popup p{font-size:1rem;line-height:1.6;margin-bottom:20px}#splash-screen .popup ul{margin-bottom:20px;padding-left:20px;list-style-type:disc}#splash-screen .popup li{margin-bottom:8px}#splash-screen .checkbox-container{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:20px}#splash-screen .ok-btn{font-size:1rem;padding:12px 24px;height:auto;width:auto}.tooltip{position:fixed;background-color:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:.8rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease-in-out,transform .2s ease-in-out;z-index:100000;transform:translate(-50%,0)}.tooltip.visible{opacity:1;transform:translate(-50%,-10px)}.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:rgba(0,0,0,.85) transparent transparent transparent}.edit-popup-content{text-align:center}.edit-popup-content input{width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1rem;margin-bottom:10px}#locateBtn.tracking{box-shadow:inset 2px 2px 6px #144c2d;background:linear-gradient(145deg,#2d9cdb,#1f6fb0}
 /* Grouping button-specific styles */
 #groupingToggleBtn{display:flex;flex-direction:column;font-size:2rem;height:60px;width:60px;border-radius:18px;}
 #groupingToggleBtn .emoji{font-size:2rem;}
@@ -51,7 +53,57 @@
 .toggle-off:active{box-shadow:inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;transform:none!important;}
 body.dark-mode .toggle-off{box-shadow:inset 2px 2px 6px #050505,-5px -5px 10px #323232!important;background:#0a0a0a!important;}
 body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 12px #323232!important;}
+#shareFeedBtn{background:linear-gradient(145deg, #a7a7a7, #7a7a7a);}.dark-mode #shareFeedBtn{background:linear-gradient(145deg, #444, #222);}
+#socialFeedOverlay .social-feed-item{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+body.dark-mode #socialFeedOverlay .social-feed-item:hover{
+  box-shadow: 0 4px 8px rgba(255,255,255,.1);
+}
+#socialFeedOverlay .social-feed-item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,.15);
+}
+body.dark-mode #socialFeedOverlay .social-feed-item:hover{
+  box-shadow: 0 4px 8px rgba(255,255,255,.1);
+}
+#socialFeedOverlay .social-feed-item h4{
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+body.dark-mode #socialFeedOverlay .social-feed-item h4{
+  color: #ddd;
+}
+#socialFeedOverlay .social-feed-item p{
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+}
+body.dark-mode #socialFeedOverlay .social-feed-item p{
+  color: #aaa;
+}
+#socialFeedOverlay .social-feed-list{
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 20px;
+  padding-right: 10px;
+}
+#socialFeedOverlay .popup{max-width:600px;}
+#socialFeedOverlay h2{margin-bottom:20px;}
+#socialFeedOverlay .user-id-text{font-size: 0.8rem; color: #999; margin-top: 10px; text-align: center;}
 </style>
+<!-- Libraries for the app -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
@@ -64,37 +116,50 @@ body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 
 <div id="map"></div>
 <div id="hamburger-menu-toggle">☰</div>
 <div id="side-menu">
-  <!-- Dynamic sizing button has been removed as requested -->
   <button id="groupingToggleBtn" data-tooltip="Toggle Marker Grouping">
     <span class="emoji">🗂️</span>
   </button>
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
   <div id="version-number">v1.3.5</div>
+  <div id="userIdDisplay" class="user-id-text"></div>
 </div>
 <nav id="controls">
   <button id="locateBtn" data-tooltip="Start Tracking">📍</button>
+  <button id="addCowBtn" data-tooltip="Add Cow at Center">+</button>
   <button id="showQRBtn" data-tooltip="Share Map QR">🖼️</button>
   <button id="scanQRBtn" data-tooltip="Scan QR Code">📷</button>
   <button id="importQRBtn" data-tooltip="Import Map from Image">📂</button>
   <input type="file" id="importQRInput" accept="image/*">
   <button id="clearBtn" data-tooltip="Clear All Cows">❌</button>
+  <button id="shareFeedBtn" data-tooltip="Share to Social Feed">🌐</button>
+  <button id="showSocialFeedBtn" data-tooltip="View Social Feed">📰</button>
 </nav>
-<p id="instructions">Tap the map to add a new cow marker. You'll be asked to confirm. 🐄</p>
+
 
 <div id="splash-screen" class="overlay">
   <div class="popup">
     <h2>Welcome to Moo Moo Markers! 🐮</h2>
     <p>This is a simple map app to drop markers, name them, and share them with friends via a QR code.</p>
     <ul>
-      <li><b>Add Cows:</b> Tap anywhere on the map to add a new cow marker.</li>
+      <li><b>Add Cows:</b> Tap anywhere on the map or use the `+` button to add a new cow marker.</li>
       <li><b>Share Maps:</b> Tap the 🖼️ button to generate a QR code of all your cow locations.</li>
       <li><b>Import Maps:</b> Tap the 📷 or 📂 button to scan a QR code from a camera or a file to load a new map.</li>
       <li><b>Locate Me:</b> Tap the 📍 button to start/stop continuous location tracking.</li>
+      <li><b>Share to Feed:</b> Tap the 🌐 button to share your map to a public feed.</li>
+      <li><b>View Feed:</b> Tap the 📰 button to view and load other user's shared maps.</li>
     </ul>
     <div class="checkbox-container">
       <input type="checkbox" id="doNotShowAgainCheckbox"><label for="doNotShowAgainCheckbox">Do not show this window again</label>
     </div>
     <button class="ok-btn">Start Mapping</button>
+  </div>
+</div>
+
+<div id="generalModalOverlay" class="overlay">
+  <div class="popup" id="generalModalPopup">
+    <h2 id="modalTitle"></h2>
+    <div id="modalContent"></div>
+    <div style="display:flex;justify-content:center;gap:10px;margin-top:15px;" id="modalButtons"></div>
   </div>
 </div>
 
@@ -116,268 +181,471 @@ body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-<script>
-(() => {
-  const DEFAULT_COW_NAME='A New Cow',CURRENT_LOCATION_ZOOM=13,QR_SIZE=256,MAX_QR_DATA_LENGTH=2000,SCAN_THROTTLE_MS=100,LONG_PRESS_DURATION=500;
-  const markers=[];let activeMarker=null,isDarkMode=localStorage.getItem('darkMode')==='true',lastScanTime=0;
-  let locationMarker=null, isTracking=false;
-  let isGroupingEnabled=localStorage.getItem('groupingEnabled')!=='false';
+<!-- Social Feed Overlay -->
+<div id="socialFeedOverlay" class="overlay">
+  <div class="popup">
+    <h2>Public Cow Map Feed</h2>
+    <div id="socialFeedList" class="social-feed-list">
+      <!-- Shared maps will be dynamically loaded here -->
+    </div>
+    <button class="popup-close-btn">✖️</button>
+  </div>
+</div>
+<!-- This script block is for the main application logic -->
+<script type="module">
+  // Import Firebase SDKs as modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-  // Cached DOM refs
-  const body=document.body,
-        splashScreen=document.getElementById('splash-screen'),
-        doNotShowAgainCheckbox=document.getElementById('doNotShowAgainCheckbox'),
-        darkModeToggleBtn=document.getElementById('darkModeToggleBtn'),
-        groupingToggleBtn=document.getElementById('groupingToggleBtn'),
-        hamburgerToggle=document.getElementById('hamburger-menu-toggle'),
-        sideMenu=document.getElementById('side-menu'),
-        qrOverlay=document.getElementById('qrOverlay'),
-        qrContainer=document.getElementById('qrCodeContainer'),
-        scanOverlay=document.getElementById('scanOverlay'),
-        scanVideo=document.getElementById('video'),
-        scanMessage=document.getElementById('scanMessage'),
-        importQRInput=document.getElementById('importQRInput'),
-        locateBtn=document.getElementById('locateBtn'),
-        instructionsText = document.getElementById('instructions');
-  
-  // All other control buttons.
-  const showQRBtn = document.getElementById('showQRBtn');
-  const scanQRBtn = document.getElementById('scanQRBtn');
-  const importQRBtn = document.getElementById('importQRBtn');
-  const clearBtn = document.getElementById('clearBtn');
+  (() => {
+    try {
+      // Global variables
+      const DEFAULT_COW_NAME='A New Cow',CURRENT_LOCATION_ZOOM=13,QR_SIZE=256,MAX_QR_DATA_LENGTH=2000,SCAN_THROTTLE_MS=100,LONG_PRESS_DURATION=500;
+      const markers=[];let activeMarker=null,isDarkMode=localStorage.getItem('darkMode')==='true',lastScanTime=0;
+      let locationMarker=null, isTracking=false;
+      let isGroupingEnabled=localStorage.getItem('groupingEnabled')!=='false';
+      let isAuthReady = false; // Flag for authentication status
+      let db, auth, userId; // Firebase variables
 
-  const markerToJSON=m=>{const{lat,lng}=m.getLatLng();return{lat,lng,name:m.options.title,time:m.options.timestamp};};
-  const markersToJSONString=()=>JSON.stringify(markers.map(markerToJSON));
-  const buildMarkerPopup=marker=>`<div class="marker-popup"><h3>${marker.options.title}</h3><p>${marker.options.timestamp}</p><small>${marker.options.coords}</small><div style="display:flex;justify-content:center;gap:4px;margin-top:10px;"><button id="editBtn" class="action-btn edit-action">✏️</button><button id="deleteBtn" class="action-btn delete-action">🗑️</button></div></div>`;
+      let isSocialEnabled = false;
+      let map, cowMarkers; // Leaflet map variables
 
-  function saveMarkers(){localStorage.setItem('cowMarkers',markersToJSONString());}
-  function loadMarkers(){
-    const stored=localStorage.getItem('cowMarkers');if(!stored)return;
-    try{const data=JSON.parse(stored);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){
-      markers.length=0;
-      data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time));
-    }}catch(e){console.warn('Marker load failed',e);}
-  }
-  function addCowMarker(lat,lng,name=DEFAULT_COW_NAME,time=new Date().toLocaleString()){
-    const marker=L.marker([lat,lng],{icon:L.divIcon({className:'cow-marker',html:'🐄'}),title:name});
-    marker.options.coords=`Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;marker.options.timestamp=time;
-    marker.bindPopup(buildMarkerPopup(marker),{closeButton:false});
-    markers.push(marker);
-    if (isGroupingEnabled) {
-      cowMarkers.addLayer(marker);
-    } else {
-      marker.addTo(map);
-    }
-    saveMarkers();
-    return marker;
-  }
-  function deleteMarker(marker){
-    if (isGroupingEnabled) {
-      cowMarkers.removeLayer(marker);
-    } else {
-      map.removeLayer(marker);
-    }
-    const i=markers.indexOf(marker);
-    if(i>-1)markers.splice(i,1);
-    saveMarkers();
-    activeMarker=null;
-  }
-  function showEditNamePopup(marker){
-    const{lat,lng}=marker.getLatLng(),popupContent=document.createElement('div');popupContent.classList.add('edit-popup-content');
-    popupContent.innerHTML=`<h3>Edit Cow Name</h3><input type="text" id="cowNameInput" value="${marker.options.title}"><div style="display:flex;justify-content:center;gap:8px;"><button class="save-btn">💾</button><button class="cancel-btn">✖️</button></div>`;
-    const popup=L.popup({closeButton:false,closeOnClick:false}).setLatLng([lat,lng]).setContent(popupContent).openOn(map);
-    const nameInput=popupContent.querySelector('#cowNameInput'),saveBtn=popupContent.querySelector('.save-btn'),cancelBtn=popupContent.querySelector('.cancel-btn');
-    
-    if (marker.options.title === DEFAULT_COW_NAME) {
-      nameInput.select();
-    } else {
-      nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
-    }
-    nameInput.focus();nameInput.addEventListener('click',e=>e.stopPropagation());nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')saveBtn.click();});
-    saveBtn.addEventListener('click',()=>{marker.options.title=nameInput.value||DEFAULT_COW_NAME;marker.bindPopup(buildMarkerPopup(marker));popup.remove();saveMarkers();});
-    cancelBtn.addEventListener('click',()=>popup.remove());
-  }
-  function showConfirmationModal(msg,onConfirm){
-    const html=`<div id="confirmOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><div style="display:flex;justify-content:center;gap:10px;margin-top:15px;"><button class="confirm-btn">Yes</button><button class="cancel-btn">No</button></div></div></div>`;
-    body.insertAdjacentHTML('beforeend',html);const overlay=document.getElementById('confirmOverlay');overlay.querySelector('.confirm-btn').addEventListener('click',()=>{onConfirm();overlay.remove();});overlay.querySelector('.cancel-btn').addEventListener('click',()=>overlay.remove());
-  }
-  function showAlertDialog(msg){const html=`<div id="alertOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><button class="ok-btn" style="margin-top:15px;">OK</button></div></div>`;body.insertAdjacentHTML('beforeend',html);document.getElementById('alertOverlay').querySelector('.ok-btn').addEventListener('click',()=>document.getElementById('alertOverlay').remove());}
-  function stopCamera(){const s=scanVideo.srcObject;if(s){s.getTracks().forEach(t=>t.stop());scanVideo.srcObject=null;}}
-  function loadFromJSON(json){try{const data=JSON.parse(json);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){
-    markers.forEach(m=>{if(isGroupingEnabled){cowMarkers.removeLayer(m);}else{map.removeLayer(m);}});markers.length=0;
-    cowMarkers.clearLayers();
-    data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time||new Date().toLocaleString()));
-    saveMarkers();if(markers.length>0)map.setView(markers[0].getLatLng(),CURRENT_LOCATION_ZOOM);}else showAlertDialog('Invalid QR code data format.');}catch(e){showAlertDialog('Invalid QR code data format.');}
-  }
-  function startScan(){const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');(function tick(){if(!scanOverlay.classList.contains('visible'))return;const now=Date.now();if(now-lastScanTime<SCAN_THROTTLE_MS){requestAnimationFrame(tick);return;}lastScanTime=now;if(scanVideo.readyState===scanVideo.HAVE_ENOUGH_DATA){canvas.height=scanVideo.videoHeight;canvas.width=scanVideo.videoWidth;ctx.drawImage(scanVideo,0,0,canvas.width,canvas.height);const img=ctx.getImageData(0,0,canvas.width,canvas.height),code=jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"});if(code){try{loadFromJSON(code.data);scanOverlay.classList.remove('visible');stopCamera();}catch{scanMessage.textContent='Invalid QR code.';}}}requestAnimationFrame(tick);})();}
-
-  // Map init
-  const map=L.map('map').setView([34.95,-120.43],10);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
-
-  // Initialize marker cluster group with custom icon. This version uses a fixed-size icon.
-  const cowMarkers = L.markerClusterGroup({
-    iconCreateFunction: function(cluster) {
-      const count = cluster.getChildCount();
-      const size = 50;
-      const className = 'cow-cluster-icon';
+      // Check if global variables are defined before using them.
+      const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+      const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+      const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
       
-      return L.divIcon({
-        html: `<div class="content-wrapper"><span class="cow-emoji">🐄</span><span class="count">${count}</span></div>`,
-        className: className,
-        iconSize: [size, size]
-      });
-    }
-  });
+      if (Object.keys(firebaseConfig).length > 0 && appId !== 'default-app-id') {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        isSocialEnabled = true;
 
-  // Initial state for grouping
-  if (isGroupingEnabled) {
-    map.addLayer(cowMarkers);
-  }
-
-  let ignoreNextMapClick = false;
-
-  map.on('popupclose', () => {
-    activeMarker = null;
-    ignoreNextMapClick = true;
-  });
-
-  map.on('click', e => {
-    if (ignoreNextMapClick) {
-      ignoreNextMapClick = false;
-      return;
-    }
-    // Prevent adding a marker if any modal is currently visible
-    if(document.querySelector('.overlay.visible')) return;
-    
-    showConfirmationModal("Add a new cow marker here?", () => {
-        addCowMarker(e.latlng.lat, e.latlng.lng);
-    });
-  });
-
-  map.on('popupopen',e=>{const m=e.popup._source;activeMarker=m;const el=e.popup.getElement();el.querySelector('#editBtn')?.addEventListener('click',ev=>{ev.stopPropagation();map.closePopup();showEditNamePopup(m);});el.querySelector('#deleteBtn')?.addEventListener('click',ev=>{ev.stopPropagation();showConfirmationModal("Delete this marker?",()=>deleteMarker(m));});});
-  map.on('popupclose',()=>activeMarker=null);
-
-  // Locate toggle logic
-  if (locateBtn) {
-    locateBtn.onclick=()=>{
-      if(!isTracking){
-        // start tracking
-        map.locate({ setView:true, maxZoom:CURRENT_LOCATION_ZOOM, watch:true });
-        isTracking=true;
-        locateBtn.classList.add('tracking');
-        locateBtn.dataset.tooltip='Stop Tracking';
-        locateBtn.textContent='📍';
-      } else {
-        // stop tracking
-        map.stopLocate();
-        isTracking=false;
-        locateBtn.classList.remove('tracking');
-        locateBtn.dataset.tooltip='Start Tracking';
-        locateBtn.textContent='📍';
-        if(locationMarker){locationMarker.remove();locationMarker=null;}
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            userId = user.uid;
+            document.getElementById('userIdDisplay').textContent = `User ID: ${userId}`;
+            isAuthReady = true;
+            console.log('User signed in with UID:', userId);
+            setupSocialFeedListener();
+          } else {
+            console.log('No user signed in. Attempting sign-in...');
+            try {
+              if (initialAuthToken) {
+                  await signInWithCustomToken(auth, initialAuthToken);
+              } else {
+                  await signInAnonymously(auth);
+              }
+            } catch (error) {
+              console.error('Error during sign-in:', error);
+            }
+          }
+        });
       }
-    };
-    locateBtn.setAttribute('aria-label','Toggle location tracking');
-  }
 
-  map.on('locationfound',e=>{
-    if(!locationMarker){
-      locationMarker=L.marker(e.latlng,{icon:L.divIcon({className:'cow-marker',html:'📍'}),title:'Your Location'}).addTo(map);
-    } else {
-      locationMarker.setLatLng(e.latlng);
-    }
-  });
-  map.on('locationerror',()=>{showAlertDialog('Unable to get your location.'); if(isTracking){map.stopLocate();isTracking=false;if (locateBtn) {locateBtn.classList.remove('tracking');locateBtn.dataset.tooltip='Start Tracking';} if(locationMarker){locationMarker.remove();locationMarker=null;}}});
+      // Cached DOM refs
+      const body=document.body,
+            splashScreen=document.getElementById('splash-screen'),
+            doNotShowAgainCheckbox=document.getElementById('doNotShowAgainCheckbox'),
+            darkModeToggleBtn=document.getElementById('darkModeToggleBtn'),
+            groupingToggleBtn=document.getElementById('groupingToggleBtn'),
+            hamburgerToggle=document.getElementById('hamburger-menu-toggle'),
+            sideMenu=document.getElementById('side-menu'),
+            qrOverlay=document.getElementById('qrOverlay'),
+            qrContainer=document.getElementById('qrCodeContainer'),
+            scanOverlay=document.getElementById('scanOverlay'),
+            scanVideo=document.getElementById('video'),
+            scanMessage=document.getElementById('scanMessage'),
+            importQRInput=document.getElementById('importQRInput'),
+            locateBtn=document.getElementById('locateBtn'),
+            socialFeedOverlay = document.getElementById('socialFeedOverlay'),
+            socialFeedList = document.getElementById('socialFeedList'),
+            shareFeedBtn = document.getElementById('shareFeedBtn'),
+            showSocialFeedBtn = document.getElementById('showSocialFeedBtn'),
+            clearBtn=document.getElementById('clearBtn'),
+            showQRBtn=document.getElementById('showQRBtn'),
+            scanQRBtn=document.getElementById('scanQRBtn'),
+            importQRBtn=document.getElementById('importQRBtn'),
+            addCowBtn = document.getElementById('addCowBtn');
 
-  // Other UI bindings
-  if (clearBtn) {
-    clearBtn.onclick=()=>showConfirmationModal("Clear all cow markers?",()=>{
-      if (isGroupingEnabled) {
-        cowMarkers.clearLayers();
-      } else {
-        markers.forEach(m=>map.removeLayer(m));
+      const generalModalOverlay = document.getElementById('generalModalOverlay');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalContent = document.getElementById('modalContent');
+      const modalButtons = document.getElementById('modalButtons');
+
+      // Reusable modal functions
+      function showModal(title, content, buttons) {
+        modalTitle.textContent = title;
+        modalContent.innerHTML = content;
+        modalButtons.innerHTML = '';
+        buttons.forEach(btn => {
+          const buttonEl = document.createElement('button');
+          buttonEl.className = btn.className;
+          buttonEl.textContent = btn.text;
+          buttonEl.onclick = () => {
+            if (btn.callback) btn.callback();
+            generalModalOverlay.classList.remove('visible');
+          };
+          modalButtons.appendChild(buttonEl);
+        });
+        generalModalOverlay.classList.add('visible');
       }
-      markers.length=0;
-      localStorage.removeItem('cowMarkers');activeMarker=null;
-    });
-  }
-  if (showQRBtn) {
-    showQRBtn.onclick=()=>{const data=markersToJSONString();if(data.length>MAX_QR_DATA_LENGTH){showAlertDialog("Map data too large for QR.");return;}qrContainer.innerHTML='';new QRCode(qrContainer,{text:data,width:QR_SIZE,height:QR_SIZE,colorDark:"#2c3e50",colorLight:"#faf9f7",correctLevel:QRCode.CorrectLevel.H});qrOverlay.classList.add('visible');};
-  }
-  if (scanQRBtn) {
-    scanQRBtn.onclick=()=>{scanOverlay.classList.add('visible');navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(s=>{scanVideo.srcObject=s;scanVideo.play();startScan();}).catch(()=>scanMessage.textContent='Camera access error.');};
-  }
-  document.querySelectorAll('.popup-close-btn').forEach(b=>b.onclick=()=>{b.closest('.overlay').classList.remove('visible');stopCamera();});
-  if (importQRBtn) {
-    importQRBtn.onclick=()=>importQRInput.click();
-  }
-  if (importQRInput) {
-    importQRInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=img.width;c.height=img.height;ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,c.width,c.height),code=jsQR(d.data,d.width,d.height);if(code){try{loadFromJSON(code.data);}catch{showAlertDialog('Invalid QR code.');}}else showAlertDialog('No QR code found.');};img.src=ev.target.result;};r.readAsDataURL(file);};
-  }
-  if (hamburgerToggle) {
-    hamburgerToggle.onclick=()=>sideMenu.classList.toggle('visible');
-  }
-  if (darkModeToggleBtn) {
-    darkModeToggleBtn.onclick=()=>{isDarkMode=!isDarkMode;body.classList.toggle('dark-mode',isDarkMode);darkModeToggleBtn.textContent=isDarkMode?'⚪':'⚫';darkModeToggleBtn.classList.toggle('light',isDarkMode);darkModeToggleBtn.classList.toggle('dark',!isDarkMode);localStorage.setItem('darkMode',isDarkMode);};
-  }
-  
-  // Grouping Toggle
-  const updateGroupingBtn = () => {
-    if (!groupingToggleBtn) {
-        console.error('Error: "groupingToggleBtn" element not found.');
-        return;
-    }
-    groupingToggleBtn.classList.toggle('toggle-off', !isGroupingEnabled);
-    groupingToggleBtn.dataset.tooltip = `Toggle Marker Grouping (${isGroupingEnabled ? 'On' : 'Off'})`;
-    // Change the emoji based on the state
-    const emojiSpan = groupingToggleBtn.querySelector('.emoji');
-    if (emojiSpan) {
-        emojiSpan.textContent = isGroupingEnabled ? '🗂️' : '📁';
-    }
-  };
-  
-  // Check if the button element exists before trying to assign an event handler and call the function initially
-  if (groupingToggleBtn) {
-      groupingToggleBtn.onclick = () => {
-        isGroupingEnabled = !isGroupingEnabled;
-        localStorage.setItem('groupingEnabled', isGroupingEnabled);
-        updateGroupingBtn();
-        if (isGroupingEnabled) {
-          // Grouping is now ON, add all markers to the cluster group and remove from map
-          markers.forEach(m => {
-            if(map.hasLayer(m)) map.removeLayer(m);
+
+      function showConfirmationModal(msg, onConfirm) {
+        showModal('Confirmation', `<p>${msg}</p>`, [
+          { text: 'Yes', className: 'confirm-btn', callback: onConfirm },
+          { text: 'No', className: 'cancel-btn', callback: () => {} }
+        ]);
+      }
+
+      function showAlertDialog(msg) {
+        showModal('Alert', `<p>${msg}</p>`, [
+          { text: 'OK', className: 'ok-btn', callback: () => {} }
+        ]);
+      }
+
+
+      // Function to set up the real-time social feed listener
+      const setupSocialFeedListener = () => {
+        if (!isAuthReady || !isSocialEnabled || !db || !appId) return;
+
+        const colRef = collection(db, `/artifacts/${appId}/public/data/shared-maps`);
+        const q = query(colRef);
+
+        onSnapshot(q, (querySnapshot) => {
+          socialFeedList.innerHTML = '';
+          if (querySnapshot.empty) {
+            socialFeedList.innerHTML = '<p>No shared maps yet. Be the first to share one!</p>';
+            return;
+          }
+          querySnapshot.forEach((doc) => {
+            const mapData = doc.data();
+            const item = document.createElement('div');
+            item.classList.add('social-feed-item');
+            const date = new Date(mapData.timestamp).toLocaleString();
+            item.innerHTML = `
+              <div>
+                <h4>Map from User: ${mapData.userId.substring(0, 8)}...</h4>
+                <p>${mapData.markers.length} cows shared on ${date}</p>
+              </div>
+            `;
+            item.onclick = () => {
+              showConfirmationModal("Load this map? Your current map will be overwritten.", () => {
+                loadFromJSON(JSON.stringify(mapData.markers));
+                socialFeedOverlay.classList.remove('visible');
+              });
+            };
+            socialFeedList.appendChild(item);
           });
-          cowMarkers.addLayers(markers);
+        }, (error) => {
+          console.error('Error fetching social feed:', error);
+          socialFeedList.innerHTML = '<p>Failed to load feed. Please try again.</p>';
+        });
+      };
+
+      const markerToJSON=m=>{const{lat,lng}=m.getLatLng();return{lat,lng,name:m.options.title,time:m.options.timestamp};};
+      const markersToJSONString=()=>JSON.stringify(markers.map(markerToJSON));
+      const buildMarkerPopup=marker=>`<div class="marker-popup"><h3>${marker.options.title}</h3><p>${marker.options.timestamp}</p><small>${marker.options.coords}</small><div style="display:flex;justify-content:center;gap:4px;margin-top:10px;"><button id="editBtn" class="action-btn edit-action">✏️</button><button id="deleteBtn" class="action-btn delete-action">🗑️</button></div></div>`;
+
+      function saveMarkers(){localStorage.setItem('cowMarkers',markersToJSONString());}
+      function loadMarkers(){
+        const stored=localStorage.getItem('cowMarkers');if(!stored)return;
+        try{const data=JSON.parse(stored);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){
+          markers.length=0;
+          data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time));
+        }}catch(e){console.warn('Marker load failed',e);}
+      }
+      function addCowMarker(lat,lng,name=DEFAULT_COW_NAME,time=new Date().toLocaleString()){
+        const marker=L.marker([lat,lng],{icon:L.divIcon({className:'cow-marker',html:'🐄'}),title:name});
+        marker.options.coords=`Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;marker.options.timestamp=time;
+        marker.bindPopup(buildMarkerPopup(marker),{closeButton:false});
+        markers.push(marker);
+        if (isGroupingEnabled) {
+          cowMarkers.addLayer(marker);
         } else {
-          // Grouping is now OFF, remove all markers from the cluster group and add to map
-          cowMarkers.clearLayers();
-          markers.forEach(m => {
-            m.addTo(map);
+          marker.addTo(map);
+        }
+        saveMarkers();
+        return marker;
+      }
+      function deleteMarker(marker){
+        if (isGroupingEnabled) {
+          cowMarkers.removeLayer(marker);
+        } else {
+          map.removeLayer(marker);
+        }
+        const i=markers.indexOf(marker);
+        if(i>-1)markers.splice(i,1);
+        saveMarkers();
+        activeMarker=null;
+      }
+      function showEditNamePopup(marker){
+        const{lat,lng}=marker.getLatLng();
+        const content = `
+          <h3>Edit Cow Name</h3>
+          <input type="text" id="cowNameInput" value="${marker.options.title}">
+        `;
+        const buttons = [
+          { text: '💾', className: 'save-btn', callback: () => {
+            const nameInput = document.getElementById('cowNameInput');
+            marker.options.title = nameInput.value || DEFAULT_COW_NAME;
+            marker.bindPopup(buildMarkerPopup(marker));
+            saveMarkers();
+            map.closePopup();
+          }},
+          { text: '✖️', className: 'cancel-btn', callback: () => {
+            map.closePopup();
+          }}
+        ];
+        showModal('Edit Cow Name', content, buttons);
+        
+        const nameInput = document.getElementById('cowNameInput');
+        if (marker.options.title === DEFAULT_COW_NAME) {
+          nameInput.select();
+        } else {
+          nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+        }
+        nameInput.focus();
+        nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')buttons[0].callback();});
+      }
+      
+      function stopCamera(){const s=scanVideo.srcObject;if(s){s.getTracks().forEach(t=>t.stop());scanVideo.srcObject=null;}}
+      function loadFromJSON(json){try{const data=JSON.parse(json);if(Array.isArray(data)&&data.every(c=>typeof c.lat==='number'&&typeof c.lng==='number'&&typeof c.name==='string')){
+        markers.forEach(m=>{if(isGroupingEnabled){cowMarkers.removeLayer(m);}else{map.removeLayer(m);}});markers.length=0;
+        if(cowMarkers) cowMarkers.clearLayers();
+        data.forEach(c=>addCowMarker(c.lat,c.lng,c.name,c.time||new Date().toLocaleString()));
+        saveMarkers();if(markers.length>0)map.setView(markers[0].getLatLng(),CURRENT_LOCATION_ZOOM);}else showAlertDialog('Invalid QR code data format.');}catch(e){showAlertDialog('Invalid QR code data format.');}
+      }
+      function startScan(){const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');(function tick(){if(!scanOverlay.classList.contains('visible'))return;const now=Date.now();if(now-lastScanTime<SCAN_THROTTLE_MS){requestAnimationFrame(tick);return;}lastScanTime=now;if(scanVideo.readyState===scanVideo.HAVE_ENOUGH_DATA){canvas.height=scanVideo.videoHeight;canvas.width=scanVideo.videoWidth;ctx.drawImage(scanVideo,0,0,canvas.width,canvas.height);const img=ctx.getImageData(0,0,canvas.width,canvas.height),code=jsQR(img.data,img.width,img.height,{inversionAttempts:"dontInvert"});if(code){try{loadFromJSON(code.data);scanOverlay.classList.remove('visible');stopCamera();}catch{scanMessage.textContent='Invalid QR code.';}}}requestAnimationFrame(tick);})();}
+
+      // Check if Leaflet is available before initializing the map
+      if (typeof L !== 'undefined') {
+        map=L.map('map').setView([34.95,-120.43],10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
+
+        cowMarkers = L.markerClusterGroup({
+          iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            const size = 50;
+            const className = 'cow-cluster-icon';
+            
+            return L.divIcon({
+              html: `<div class="content-wrapper"><span class="cow-emoji">🐄</span><span class="count">${count}</span></div>`,
+              className: className,
+              iconSize: [size, size]
+            });
+          }
+        });
+
+        if (isGroupingEnabled) {
+          map.addLayer(cowMarkers);
+        }
+
+        let ignoreNextMapClick = false;
+
+        map.on('popupclose', () => {
+          activeMarker = null;
+          ignoreNextMapClick = true;
+        });
+
+        map.on('click', e => {
+          if (ignoreNextMapClick) {
+            ignoreNextMapClick = false;
+            return;
+          }
+          
+          if(document.querySelector('.overlay.visible')) return;
+          
+          showConfirmationModal("Add a new cow marker here?", () => {
+              addCowMarker(e.latlng.lat, e.latlng.lng);
+          });
+        });
+
+        map.on('popupopen',e=>{const m=e.popup._source;activeMarker=m;const el=e.popup.getElement();el.querySelector('#editBtn')?.addEventListener('click',ev=>{ev.stopPropagation();map.closePopup();showEditNamePopup(m);});el.querySelector('#deleteBtn')?.addEventListener('click',ev=>{ev.stopPropagation();showConfirmationModal("Delete this marker?",()=>deleteMarker(m));});});
+        map.on('popupclose',()=>activeMarker=null);
+
+        if (locateBtn) {
+          locateBtn.onclick=()=>{
+            if(!isTracking){
+              map.locate({ setView:true, maxZoom:CURRENT_LOCATION_ZOOM, watch:true });
+              isTracking=true;
+              locateBtn.classList.add('tracking');
+              locateBtn.dataset.tooltip='Stop Tracking';
+              locateBtn.textContent='📍';
+            } else {
+              map.stopLocate();
+              isTracking=false;
+              locateBtn.classList.remove('tracking');
+              locateBtn.dataset.tooltip='Start Tracking';
+              locateBtn.textContent='📍';
+              if(locationMarker){locationMarker.remove();locationMarker=null;}
+            }
+          };
+          locateBtn.setAttribute('aria-label','Toggle location tracking');
+        }
+
+        map.on('locationfound',e=>{
+          if(!locationMarker){
+            locationMarker=L.marker(e.latlng,{icon:L.divIcon({className:'cow-marker',html:'📍'}),title:'Your Location'}).addTo(map);
+          } else {
+            locationMarker.setLatLng(e.latlng);
+          }
+        });
+        map.on('locationerror',()=>{showAlertDialog('Unable to get your location.'); if(isTracking){map.stopLocate();isTracking=false;if (locateBtn) {locateBtn.classList.remove('tracking');locateBtn.dataset.tooltip='Start Tracking';} if(locationMarker){locationMarker.remove();locationMarker=null;}}});
+
+        // Other UI bindings
+        if (addCowBtn) {
+          addCowBtn.onclick = () => {
+            const center = map.getCenter();
+            showConfirmationModal("Add a new cow marker here?", () => {
+              addCowMarker(center.lat, center.lng);
+            });
+          };
+        }
+        if (clearBtn) {
+          clearBtn.onclick=()=>showConfirmationModal("Clear all cow markers?",()=>{
+            if (isGroupingEnabled) {
+              cowMarkers.clearLayers();
+            } else {
+              markers.forEach(m=>map.removeLayer(m));
+            }
+            markers.length=0;
+            localStorage.removeItem('cowMarkers');activeMarker=null;
           });
         }
-      };
-      updateGroupingBtn();
-  }
+        if (showQRBtn) {
+          showQRBtn.onclick=()=>{const data=markersToJSONString();if(data.length>MAX_QR_DATA_LENGTH){showAlertDialog("Map data too large for QR.");return;}qrContainer.innerHTML='';new QRCode(qrContainer,{text:data,width:QR_SIZE,height:QR_SIZE,colorDark:"#2c3e50",colorLight:"#faf9f7",correctLevel:QRCode.CorrectLevel.H});qrOverlay.classList.add('visible');};
+        }
+        if (scanQRBtn) {
+          scanQRBtn.onclick=()=>{
+            if (window.isSecureContext) {
+              scanOverlay.classList.add('visible');navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(s=>{scanVideo.srcObject=s;scanVideo.play();startScan();}).catch(()=>scanMessage.textContent='Camera access error.');
+            } else {
+              showAlertDialog('Camera access is not allowed on an insecure connection (file://). Please use a local web server to enable this feature.');
+            }
+          };
+        }
+        document.querySelectorAll('.popup-close-btn').forEach(b=>b.onclick=()=>{b.closest('.overlay').classList.remove('visible');stopCamera();});
+        if (importQRBtn) {
+          importQRBtn.onclick=()=>importQRInput.click();
+        }
+        if (importQRInput) {
+          importQRInput.onchange=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=img.width;c.height=img.height;ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,c.width,c.height),code=jsQR(d.data,d.width,d.height);if(code){try{loadFromJSON(code.data);}catch{showAlertDialog('Invalid QR code.');}}else showAlertDialog('No QR code found.');};img.src=ev.target.result;};r.readAsDataURL(file);};
+        }
+        if (hamburgerToggle) {
+          hamburgerToggle.onclick=()=>sideMenu.classList.toggle('visible');
+        }
+        if (darkModeToggleBtn) {
+          darkModeToggleBtn.onclick=()=>{isDarkMode=!isDarkMode;body.classList.toggle('dark-mode',isDarkMode);darkModeToggleBtn.textContent=isDarkMode?'⚪':'⚫';darkModeToggleBtn.classList.toggle('light',isDarkMode);darkModeToggleBtn.classList.toggle('dark',!isDarkMode);localStorage.setItem('darkMode',isDarkMode);};
+        }
 
-  // Splash screen and tooltip bindings with null checks
-  if(localStorage.getItem('showSplashScreen')!=='false' && splashScreen) splashScreen.classList.add('visible');
-  const okBtn = splashScreen ? splashScreen.querySelector('.ok-btn') : null;
-  if(okBtn) {
-    okBtn.onclick = ()=>{if(doNotShowAgainCheckbox.checked)localStorage.setItem('showSplashScreen','false');splashScreen.classList.remove('visible');};
-  }
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.visible').forEach(o=>{o.classList.remove('visible');stopCamera();});});
-  document.querySelectorAll('[data-tooltip]').forEach(btn=>{let t,timeout;const show=()=>{if(t)t.remove();t=document.createElement('div');t.className='tooltip';t.textContent=btn.dataset.tooltip;document.body.appendChild(t);const r=btn.getBoundingClientRect(),tr=t.getBoundingClientRect();let l=r.left+r.width/2;if(l<tr.width/2)l=tr.width/2;else if(l>innerWidth-tr.width/2)l=innerWidth-tr.width/2;t.style.left=`${l}px`;t.style.top=`${r.top-10}px`;setTimeout(()=>t.classList.add('visible'),10);};const hide=()=>{if(t){t.classList.remove('visible');setTimeout(()=>t?.remove(),200);t=null;}};btn.onmouseenter=show;btn.onmouseleave=hide;btn.ontouchstart=()=>timeout=setTimeout(show,LONG_PRESS_DURATION);btn.ontouchend=()=>clearTimeout(timeout);btn.ontouchmove=()=>{clearTimeout(timeout);hide();};});
-  
-  if (body) {
-      body.classList.toggle('dark-mode',isDarkMode);
-  }
-  loadMarkers();
-})();
+        const updateGroupingBtn = () => {
+          if (!groupingToggleBtn) {
+              console.error('Error: "groupingToggleBtn" element not found.');
+              return;
+          }
+          groupingToggleBtn.classList.toggle('toggle-off', !isGroupingEnabled);
+          groupingToggleBtn.dataset.tooltip = `Toggle Marker Grouping (${isGroupingEnabled ? 'On' : 'Off'})`;
+          const emojiSpan = groupingToggleBtn.querySelector('.emoji');
+          if (emojiSpan) {
+              emojiSpan.textContent = isGroupingEnabled ? '🗂️' : '📁';
+          }
+        };
+        
+        if (groupingToggleBtn) {
+            groupingToggleBtn.onclick = () => {
+              isGroupingEnabled = !isGroupingEnabled;
+              localStorage.setItem('groupingEnabled', isGroupingEnabled);
+              updateGroupingBtn();
+              if (isGroupingEnabled) {
+                markers.forEach(m => {
+                  if(map.hasLayer(m)) map.removeLayer(m);
+                });
+                cowMarkers.addLayers(markers);
+                map.addLayer(cowMarkers);
+              } else {
+                if(map.hasLayer(cowMarkers)) map.removeLayer(cowMarkers);
+                cowMarkers.clearLayers();
+                markers.forEach(m => {
+                  m.addTo(map);
+                });
+              }
+            };
+            updateGroupingBtn();
+        }
+
+        if (isSocialEnabled) {
+          if (shareFeedBtn) {
+            shareFeedBtn.onclick = async () => {
+              if (!isAuthReady) {
+                showAlertDialog('Please wait, the app is still connecting.');
+                return;
+              }
+
+              const mapData = markers.map(markerToJSON);
+              if (mapData.length === 0) {
+                showAlertDialog('Cannot share an empty map.');
+                return;
+              }
+              
+              const newMapDoc = {
+                userId: auth.currentUser.uid,
+                markers: mapData,
+                timestamp: new Date().toISOString()
+              };
+
+              try {
+                const colRef = collection(db, `/artifacts/${appId}/public/data/shared-maps`);
+                await addDoc(colRef, newMapDoc);
+                showAlertDialog('Map successfully shared to the social feed!');
+              } catch (e) {
+                console.error('Error sharing map to feed:', e);
+                showAlertDialog('Failed to share map. Please try again later.');
+              }
+            };
+          }
+          if (showSocialFeedBtn) {
+            showSocialFeedBtn.onclick = () => {
+              if (!isAuthReady) {
+                showAlertDialog('Please wait, the app is still connecting.');
+                return;
+              }
+              socialFeedOverlay.classList.add('visible');
+              // The onSnapshot listener will handle populating the feed, so no need to set "Loading..." here.
+            };
+          }
+        } else {
+          if (shareFeedBtn) shareFeedBtn.disabled = true;
+          if (showSocialFeedBtn) showSocialFeedBtn.disabled = true;
+          if (shareFeedBtn) shareFeedBtn.title = "Social features are disabled without a web server.";
+          if (showSocialFeedBtn) showSocialFeedBtn.title = "Social features are disabled without a web server.";
+        }
+        
+        // Splash screen and tooltip bindings with null checks
+        if(localStorage.getItem('showSplashScreen')!=='false' && splashScreen) splashScreen.classList.add('visible');
+        const okBtn = splashScreen ? splashScreen.querySelector('.ok-btn') : null;
+        if(okBtn) {
+          okBtn.onclick = ()=>{if(doNotShowAgainCheckbox.checked)localStorage.setItem('showSplashScreen','false');splashScreen.classList.remove('visible');};
+        }
+        document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.visible').forEach(o=>{o.classList.remove('visible');stopCamera();});});
+        document.querySelectorAll('[data-tooltip]').forEach(btn=>{let t,timeout;const show=()=>{if(t)t.remove();t=document.createElement('div');t.className='tooltip';t.textContent=btn.dataset.tooltip;document.body.appendChild(t);const r=btn.getBoundingClientRect(),tr=t.getBoundingClientRect();let l=r.left+r.width/2;if(l<tr.width/2)l=tr.width/2;else if(l>innerWidth-tr.width/2)l=innerWidth-tr.width/2;t.style.left=`${l}px`;t.style.top=`${r.top-10}px`;setTimeout(()=>t.classList.add('visible'),10);};const hide=()=>{if(t){t.classList.remove('visible');setTimeout(()=>t?.remove(),200);t=null;}};btn.onmouseenter=show;btn.onmouseleave=hide;btn.ontouchstart=()=>timeout=setTimeout(show,LONG_PRESS_DURATION);btn.ontouchend=()=>clearTimeout(timeout);btn.ontouchmove=()=>{clearTimeout(timeout);hide();};});
+        
+        if (body) {
+            body.classList.toggle('dark-mode',isDarkMode);
+        }
+        
+        window.addEventListener('load', () => {
+            loadMarkers();
+        });
+      } else {
+        showAlertDialog('The Leaflet map library could not be loaded. Please check your internet connection.');
+      }
+    } catch (error) {
+      console.error("An error occurred during app initialization:", error);
+      showAlertDialog("An error occurred loading the application. This may be due to browser security restrictions when opening the file directly. Some features may not work. Please try using a local web server.");
+    }
+  })();
 </script>
 </body>
 </html>
