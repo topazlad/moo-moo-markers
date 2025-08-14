@@ -3,12 +3,232 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Moo Moo Markers v1.6.0 - Finalized Dark Mode Styling</title>
-<!-- v1.6.0: Fixed dark mode styling for the Leaflet popup and added a green text shadow for the cow emojis in light mode. -->
+<title>Moo Moo Markers v1.4.1 beta</title>
+<!-- v1.4.1 beta: Fixed a typo in the localStorage call (localStorage.item was corrected to localStorage.getItem). -->
 <style>
-*{box-sizing:border-box}body,html{margin:0;padding:0;height:100%;width:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;background:#faf9f7;color:#2c3e50;display:flex;flex-direction:column;overflow:hidden;transition:background .3s ease,color .3s ease}body.dark-mode{background:#121212;color:#e0e0e0}body.dark-mode nav#controls,body.dark-mode #side-menu{background:#1e1e1e;box-shadow:0 -3px 10px rgba(255,255,255,.08)}body.dark-mode nav#controls button,body.dark-mode .action-btn,body.dark-mode #darkModeToggleBtn.dark,body.dark-mode #menuBtn{box-shadow:5px 5px 10px #0a0a0a,-5px -5px 10px #323232}body.dark-mode nav#controls button:hover,body.dark-mode nav#controls button:focus,body.dark-mode .action-btn:hover,body.dark-mode .action-btn:focus,body.dark-mode #darkModeToggleBtn.dark:hover,body.dark-mode #menuBtn:hover{box-shadow:6px 6px 12px #0a0a0a,-6px -6px 12px #323232}body.dark-mode nav#controls button:active,body.dark-mode .action-btn:active,body.dark-mode #darkModeToggleBtn.dark:active,body.dark-mode #menuBtn:active{background:#0a0a0a;box-shadow:inset 2px 2px 6px #050505}body.dark-mode p#instructions{color:#aaa}body.dark-mode .popup{background:#1e1e1e;color:#e0e0e0;box-shadow:0 10px 30px rgba(0,0,0,.5)}body.dark-mode .popup h2{color:#27ae60}body.dark-mode .popup input{background:#2c2c2c;color:#e0e0e0;border:1px solid #444}#map{flex-grow:1;position:relative;z-index:0}nav#controls{background:#fff;box-shadow:0 -3px 10px rgba(0,0,0,.12);padding:10px 12px;display:flex;justify-content:center;align-items:center;gap:10px;user-select:none;border-top-left-radius:12px;border-top-right-radius:12px;z-index:10;flex-shrink:0;flex-wrap:wrap;overflow-x:hidden;transition:background .3s ease,box-shadow .3s ease}button{background:linear-gradient(145deg,#6fcf97,#27ae60);border:none;color:#fff;font-weight:700;font-size:1.5rem;width:50px;height:50px;border-radius:14px;cursor:pointer;box-shadow:5px 5px 10px #1e7c45,-5px -5px 10px #48d67f;transition:all .2s ease;user-select:none;touch-action:manipulation;display:flex;justify-content:center;align-items:center;text-align:center;padding:0;position:relative}button:hover,button:focus{transform:translateY(-2px);box-shadow:6px 6px 12px #196232,-6px -6px 12px #55e18f;outline:none}button:active{transform:translateY(1px);background:#1e7c45;box-shadow:inset 2px 2px 6px #144c2d}#darkModeToggleBtn.light{background:linear-gradient(145deg,#f1c40f,#f39c12)}#darkModeToggleBtn.light:hover{box-shadow:6px 6px 12px #c27c0e,-6px -6px 12px #ffc140}#darkModeToggleBtn.light:active{background:#c27c0e;box-shadow:inset 2px 2px 6px #945f0b}.popup .save-btn,.popup .confirm-btn,.popup .ok-btn{background:#27ae60;font-size:1.5rem;width:50px;height:50px}.popup .cancel-btn,.popup .delete-action{background:#e74c3c;font-size:1.5rem;width:50px;height:50px}.popup .edit-action{background:#3498db;font-size:1.5rem;width:50px;height:50px}p#instructions{text-align:center;font-size:.85rem;color:#555;user-select:none;margin-top:8px;padding:0 15px}.cow-marker{font-size:40px;color:#27ae60;text-shadow:1px 1px 2px #27ae60;transition:transform .3s ease;cursor:pointer;user-select:none}.cow-marker.active{transform:scale(2.2);z-index:9999;filter:drop-shadow(0 0 5px rgba(39,174,96,.8))}body.dark-mode .cow-marker{text-shadow:1px 1px 2px #000;}.marker-popup h3{font-size:1.5rem;color:#27ae60;text-shadow:1px 1px 2px #000;margin-top:0;margin-bottom:8px;}body.dark-mode .marker-popup h3{text-shadow:1px 1px 2px #fff;}
+/* Basic reset */
+* { box-sizing: border-box; }
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background: #faf9f7;
+  color: #2c3e50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background .3s ease, color .3s ease;
+}
+
+/* Dark mode styling */
+body.dark-mode {
+  background: #121212;
+  color: #e0e0e0;
+}
+body.dark-mode nav#controls,
+body.dark-mode #side-menu {
+  background: #1e1e1e;
+  box-shadow: 0 -3px 10px rgba(255,255,255,.08);
+}
+body.dark-mode nav#controls button,
+body.dark-mode .action-btn,
+body.dark-mode #darkModeToggleBtn.dark,
+body.dark-mode #menuBtn{
+  box-shadow: 5px 5px 10px #0a0a0a, -5px -5px 10px #323232;
+}
+body.dark-mode nav#controls button:hover,
+body.dark-mode nav#controls button:focus,
+body.dark-mode .action-btn:hover,
+body.dark-mode .action-btn:focus,
+body.dark-mode #darkModeToggleBtn.dark:hover,
+body.dark-mode #menuBtn:hover {
+  box-shadow: 6px 6px 12px #0a0a0a, -6px -6px 12px #323232;
+}
+body.dark-mode nav#controls button:active,
+body.dark-mode .action-btn:active,
+body.dark-mode #darkModeToggleBtn.dark:active,
+body.dark-mode #menuBtn:active {
+  background: #0a0a0a;
+  box-shadow: inset 2px 2px 6px #050505;
+}
+body.dark-mode p#instructions { color: #aaa; }
+body.dark-mode .popup {
+  background: #1e1e1e;
+  color: #e0e0e0;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+body.dark-mode .popup h2 { color: #6fcf97; }
+body.dark-mode .popup input {
+  background: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+body.dark-mode .leaflet-popup-content-wrapper,
+body.dark-mode .leaflet-popup-tip {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+body.dark-mode .leaflet-popup-content-wrapper {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+body.dark-mode .leaflet-popup-tip {
+  background: #1e1e1e;
+}
+body.dark-mode .cow-marker {
+  text-shadow: 1px 1px 2px #000;
+}
+body.dark-mode .marker-popup h3 {
+  text-shadow: 1px 1px 2px #fff;
+}
+body.dark-mode #menuBtn {
+  color: #e0e0e0;
+}
+body.dark-mode #menuBtn:hover,
+body.dark-mode #menuBtn:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode #menuBtn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+#map {
+  flex-grow: 1;
+  position: relative;
+  z-index: 0;
+}
+
+nav#controls {
+  background: #fff;
+  box-shadow: 0 -3px 10px rgba(0,0,0,.12);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  z-index: 10;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  overflow-x: hidden;
+  transition: background .3s ease, box-shadow .3s ease;
+}
+
+button {
+  background: linear-gradient(145deg, #6fcf97, #27ae60);
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 5px 5px 10px #1e7c45, -5px -5px 10px #48d67f;
+  transition: all .2s ease;
+  user-select: none;
+  touch-action: manipulation;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0;
+  position: relative;
+}
+button:hover, button:focus {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 12px #196232, -6px -6px 12px #55e18f;
+  outline: none;
+}
+button:active {
+  transform: translateY(1px);
+  background: #1e7c45;
+  box-shadow: inset 2px 2px 6px #144c2d;
+}
+
+/* Specific styling for other buttons */
+#darkModeToggleBtn.light {
+  background: linear-gradient(145deg, #f1c40f, #f39c12);
+}
+#darkModeToggleBtn.light:hover {
+  box-shadow: 6px 6px 12px #c27c0e, -6px -6px 12px #ffc140;
+}
+#darkModeToggleBtn.light:active {
+  background: #c27c0e;
+  box-shadow: inset 2px 2px 6px #945f0b;
+}
+.popup .save-btn,
+.popup .confirm-btn,
+.popup .ok-btn {
+  background: #27ae60;
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+}
+.popup .cancel-btn,
+.popup .delete-action {
+  background: #e74c3c;
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+}
+.popup .edit-action {
+  background: #3498db;
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+}
+.gemini-btn {
+  background: linear-gradient(145deg, #9b59b6, #8e44ad);
+  color: #fff;
+  box-shadow: 5px 5px 10px #703c8c, -5px -5px 10px #ae66d1;
+}
+.gemini-btn:hover {
+  box-shadow: 6px 6px 12px #703c8c, -6px -6px 12px #ae66d1;
+}
+.gemini-btn:active {
+  background: #703c8c;
+  box-shadow: inset 2px 2px 6px #512b6b;
+}
+p#instructions {
+  text-align: center;
+  font-size: .85rem;
+  color: #555;
+  user-select: none;
+  margin-top: 8px;
+  padding: 0 15px;
+}
+.cow-marker {
+  font-size: 40px;
+  color: #27ae60;
+  text-shadow: 1px 1px 2px #27ae60;
+  transition: transform .3s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.cow-marker.active {
+  transform: scale(2.2);
+  z-index: 9999;
+  filter: drop-shadow(0 0 5px rgba(39,174,96,.8));
+}
+body.dark-mode .cow-marker {
+  text-shadow: 1px 1px 2px #000;
+}
+.marker-popup h3 {
+  font-size: 1.5rem;
+  color: #27ae60;
+  text-shadow: 1px 1px 2px #000;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
 /* Leaflet popup dark mode styling */
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
   background: #fff;
   color: #2c3e50;
 }
@@ -21,49 +241,295 @@ body.dark-mode .leaflet-popup-tip {
 }
 
 /* Precise vertical alignment for marker cluster icon */
-.cow-cluster-icon{
-  background:#27ae60;
-  border-radius:50%;
-  color:#fff;
-  font-weight:700;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  box-shadow:2px 2px 5px rgba(0,0,0,.3);
-  transition:width .2s ease,height .2s ease;
-  font-size:1.5rem; /* Set base font size for consistency */
+.cow-cluster-icon {
+  background: #27ae60;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 2px 2px 5px rgba(0,0,0,.3);
+  transition: width .2s ease, height .2s ease;
+  font-size: 1.5rem;
 }
 .cow-cluster-icon .content-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* Use transform for precise vertical adjustment */
   transform: translateY(2px);
 }
-.cow-cluster-icon span.count{
-  font-size: 0.8em; /* Relative to parent font-size */
-  line-height:1;
+.cow-cluster-icon span.count {
+  font-size: 0.8em;
+  line-height: 1;
 }
-.cow-cluster-icon span.cow-emoji{
-  font-size: 1.2em; /* Relative to parent font-size */
-  line-height:1;
+.cow-cluster-icon span.cow-emoji {
+  font-size: 1.2em;
+  line-height: 1;
 }
-.cow-cluster-icon-small{font-size:.9rem;}.cow-cluster-icon-small .cow-emoji{font-size:1.2rem;}
-.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;justify-content:center;align-items:center;z-index:99999;visibility:hidden;opacity:0;transition:opacity .25s ease}.overlay.visible{visibility:visible;opacity:1}.popup{background:#fff;padding:20px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;max-width:90vw;user-select:none;position:relative}.popup h2{margin:0 0 12px;font-weight:700;color:#27ae60}#qrCodeContainer{margin:0 auto 18px;max-width:300px;max-height:300px}#video{width:100%;max-width:320px;border-radius:12px;background:#000}#scanMessage{margin:12px 0 0;color:#333;font-size:.9rem;font-family:monospace}#downloadQRBtn{width:auto;height:auto;padding:8px 18px}.leaflet-popup-content small{font-size:.7rem;color:#666;display:block}.action-btn{font-size:1.5rem;padding:0;width:50px;height:50px;border-radius:14px;cursor:pointer;border:none;margin:2px}#importQRInput{display:none}#menuBtn{font-size:30px;cursor:pointer;color:#fff;line-height:1;height:50px;width:50px;border-radius:14px;display:flex;justify-content:center;align-items:center;transition:all .2s ease;user-select:none;touch-action:manipulation;background:linear-gradient(145deg,#6fcf97,#27ae60);box-shadow:5px 5px 10px #1e7c45,-5px -5px 10px #48d67f;position:fixed;bottom:10px;right:10px;z-index:9999}.menu-btn-container:hover,#menuBtn:hover,#menuBtn:focus{transform:translateY(-2px);box-shadow:6px 6px 12px #196232,-6px -6px 12px #55e18f;outline:none}#menuBtn:active{transform:translateY(1px);background:#1e7c45;box-shadow:inset 2px 2px 6px #144c2d}#side-menu{position:fixed;top:0;right:-70px;width:70px;height:calc(100% - 70px);background:#fff;box-shadow:-5px 0 15px rgba(0,0,0,.15);z-index:999;padding:15px 0;transition:right .3s ease-in-out;display:flex;flex-direction:column;align-items:center;gap:20px}#side-menu.visible{right:0}#version-number{position:absolute;bottom:20px;font-size:.8rem;color:#999}#splash-screen .popup{max-width:500px;text-align:left}#splash-screen .popup h2{text-align:center;font-size:2rem}#splash-screen .popup p{font-size:1rem;line-height:1.6;margin-bottom:20px}#splash-screen .popup ul{margin-bottom:20px;padding-left:20px;list-style-type:disc}#splash-screen .popup li{margin-bottom:8px}#splash-screen .checkbox-container{display:flex;align-items:center;gap:8px;margin-top:10px;margin-bottom:20px}#splash-screen .ok-btn{font-size:1rem;padding:12px 24px;height:auto;width:auto}.tooltip{position:fixed;background-color:rgba(0,0,0,.85);color:#fff;padding:6px 12px;border-radius:6px;font-size:.8rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s ease-in-out,transform .2s ease-in-out;z-index:100000;transform:translate(-50%,0)}.tooltip.visible{opacity:1;transform:translate(-50%,-10px)}.tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:5px;border-style:solid;border-color:rgba(0,0,0,.85) transparent transparent transparent}.edit-popup-content{text-align:center}.edit-popup-content input{width:100%;padding:8px;border-radius:8px;border:1px solid #ccc;font-size:1rem;margin-bottom:10px}#locateBtn.tracking{box-shadow:inset 2px 2px 6px #144c2d;background:linear-gradient(145deg,#2d9cdb,#1f6fb0}
-/* Grouping button-specific styles */
-#groupingToggleBtn{display:flex;flex-direction:column;font-size:2rem;height:60px;width:60px;border-radius:18px;}
-#groupingToggleBtn .emoji{font-size:2rem;}
-/* Styles for the "off" state of the toggle button */
-.toggle-off{
-  background:linear-gradient(145deg,#d26b5d,#e74c3c)!important;
-  box-shadow:inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;
+.cow-cluster-icon-small { font-size: .9rem; }
+.cow-cluster-icon-small .cow-emoji { font-size: 1.2rem; }
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.overlay.visible {
+  visibility: visible;
+  opacity: 1;
+}
+.popup {
+  background: #fff;
+  padding: 20px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  text-align: center;
+  max-width: 90vw;
+  user-select: none;
+  position: relative;
+}
+.popup h2 {
+  margin: 0 0 12px;
+  font-weight: 700;
+  color: #27ae60;
+}
+#qrCodeContainer {
+  margin: 0 auto 18px;
+  max-width: 300px;
+  max-height: 300px;
+}
+#video {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 12px;
+  background: #000;
+}
+#scanMessage {
+  margin: 12px 0 0;
+  color: #333;
+  font-size: .9rem;
+  font-family: monospace;
+}
+#downloadQRBtn {
+  width: auto;
+  height: auto;
+  padding: 8px 18px;
+}
+.leaflet-popup-content small {
+  font-size: .7rem;
+  color: #666;
+  display: block;
+}
+.action-btn {
+  font-size: 1.5rem;
+  padding: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  cursor: pointer;
+  border: none;
+  margin: 2px;
+}
+#importQRInput {
+  display: none;
+}
+
+/* --- UPDATED MENU STYLING --- */
+#menuBtn {
+  font-size: 30px;
+  cursor: pointer;
+  color: #fff;
+  line-height: 1;
+  height: 50px;
+  width: 50px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all .2s ease;
+  user-select: none;
+  touch-action: manipulation;
+  background: linear-gradient(145deg, #6fcf97, #27ae60);
+  box-shadow: 5px 5px 10px #1e7c45, -5px -5px 10px #48d67f;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 9999;
+}
+#menuBtn:hover,
+#menuBtn:focus {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 12px #196232, -6px -6px 12px #55e18f;
+  outline: none;
+}
+#menuBtn:active {
+  transform: translateY(1px);
+  background: #1e7c45;
+  box-shadow: inset 2px 2px 6px #144c2d;
+}
+
+#side-menu {
+  position: fixed;
+  top: 0;
+  right: -70px;
+  width: 70px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -5px 0 15px rgba(0,0,0,.15);
+  z-index: 999;
+  padding: 15px 0;
+  transition: right .3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+#side-menu.visible {
+  right: 0;
+}
+/* --- END UPDATED MENU STYLING --- */
+
+#version-number {
+  position: absolute;
+  bottom: 20px;
+  font-size: .8rem;
+  color: #999;
+}
+#splash-screen .popup {
+  max-width: 500px;
+  text-align: left;
+}
+#splash-screen .popup h2 {
+  text-align: center;
+  font-size: 2rem;
+}
+#splash-screen .popup p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+#splash-screen .popup ul {
+  margin-bottom: 20px;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+#splash-screen .popup li {
+  margin-bottom: 8px;
+}
+#splash-screen .checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+#splash-screen .ok-btn {
+  font-size: 1rem;
+  padding: 12px 24px;
+  height: auto;
+  width: auto;
+}
+.tooltip {
+  position: fixed;
+  background-color: rgba(0,0,0,.85);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: .8rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease-in-out, transform .2s ease-in-out;
+  z-index: 100000;
+  transform: translate(-50%,0);
+}
+.tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%,-10px);
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(0,0,0,.85) transparent transparent transparent;
+}
+.edit-popup-content {
+  text-align: center;
+}
+.edit-popup-content input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+#locateBtn.tracking {
+  box-shadow: inset 2px 2px 6px #144c2d;
+  background: linear-gradient(145deg,#2d9cdb,#1f6fb0);
+}
+#groupingToggleBtn {
+  display: flex;
+  flex-direction: column;
+  font-size: 2rem;
+  height: 60px;
+  width: 60px;
+  border-radius: 18px;
+}
+#groupingToggleBtn .emoji {
+  font-size: 2rem;
+}
+.toggle-off {
+  background: linear-gradient(145deg,#d26b5d,#e74c3c)!important;
+  box-shadow: inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;
   transform:none!important;
 }
-.toggle-off:hover{box-shadow:inset 2px 2px 6px #943224,-6px -6px 12px #ff7866!important;transform:none!important;}
-.toggle-off:active{box-shadow:inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;transform:none!important;}
-body.dark-mode .toggle-off{box-shadow:inset 2px 2px 6px #050505,-5px -5px 10px #323232!important;background:#0a0a0a!important;}
-body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 12px #323232!important;}
+.toggle-off:hover {
+  box-shadow: inset 2px 2px 6px #943224,-6px -6px 12px #ff7866!important;
+  transform:none!important;
+}
+.toggle-off:active {
+  box-shadow: inset 2px 2px 6px #943224,-5px -5px 10px #ff7866!important;
+  transform:none!important;
+}
+body.dark-mode .toggle-off {
+  box-shadow: inset 2px 2px 6px #050505,-5px -5px 10px #323232!important;
+  background: #0a0a0a!important;
+}
+body.dark-mode .toggle-off:hover {
+  box-shadow: inset 2px 2px 6px #050505,-6px -6px 12px #323232!important;
+}
+
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -74,8 +540,9 @@ body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 </head>
 <body>
-<p id="instructions">Tap the map to add a new cow marker. You'll be asked to confirm. 🐄</p>
-<div id="map"></div>
+<div id="map">
+  <button id="menuBtn" data-tooltip="Open/Close Menu">☰</button>
+</div>
 <nav id="controls">
   <button id="locateBtn" data-tooltip="Start Tracking">📍</button>
   <button id="showQRBtn" data-tooltip="Share Map QR">🖼️</button>
@@ -86,21 +553,17 @@ body.dark-mode .toggle-off:hover{box-shadow:inset 2px 2px 6px #050505,-6px -6px 
 </nav>
 
 <div id="side-menu">
-  <!-- Dynamic sizing button has been removed as requested -->
   <button id="groupingToggleBtn" data-tooltip="Toggle Marker Grouping">
     <span class="emoji">🗂️</span>
   </button>
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
   <button id="showSplashBtn" data-tooltip="Show Welcome Screen">?</button>
   <button id="githubLinkBtn" data-tooltip="View on GitHub">🐙</button>
-  <div id="version-number">v1.6.0</div>
+  <div id="version-number">v1.4.1 beta</div>
 </div>
-
-<button id="menuBtn" data-tooltip="Open/Close Menu">☰</button>
 
 <div id="splash-screen" class="overlay">
   <div class="popup">
-    <!-- Removed modal-close-btn from splash screen as requested by the user. -->
     <h2>Welcome to Moo Moo Markers! 🐮</h2>
     <p>This is a simple map app to drop markers, name them, and share them with friends via a QR code.</p>
     <ul>
@@ -153,17 +616,15 @@ window.onload = function() {
       isTracking = false;
   let isGroupingEnabled = localStorage.getItem('groupingEnabled') !== 'false';
   
-  // A simple check to see if the device is a touch device
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-  // Cached DOM refs
+  
   const body = document.body,
         splashScreen = document.getElementById('splash-screen'),
         doNotShowAgainCheckbox = document.getElementById('doNotShowAgainCheckbox'),
         darkModeToggleBtn = document.getElementById('darkModeToggleBtn'),
         groupingToggleBtn = document.getElementById('groupingToggleBtn'),
         showSplashBtn = document.getElementById('showSplashBtn'),
-        githubLinkBtn = document.getElementById('githubLinkBtn'), // New button ref
+        githubLinkBtn = document.getElementById('githubLinkBtn'),
         menuBtn = document.getElementById('menuBtn'),
         sideMenu = document.getElementById('side-menu'),
         qrOverlay = document.getElementById('qrOverlay'),
@@ -173,23 +634,18 @@ window.onload = function() {
         scanMessage = document.getElementById('scanMessage'),
         importQRInput = document.getElementById('importQRInput'),
         locateBtn = document.getElementById('locateBtn'),
-        instructionsText = document.getElementById('instructions'),
         downloadQRBtn = document.getElementById('downloadQRBtn');
   
-  // All other control buttons.
   const showQRBtn = document.getElementById('showQRBtn');
   const scanQRBtn = document.getElementById('scanQRBtn');
   const importQRBtn = document.getElementById('importQRBtn');
   const clearBtn = document.getElementById('clearBtn');
-
-  // New function to compress marker data for QR codes
-  // It uses a compact array format: [lat, lng, name, time]
-  // This reduces the overhead of repeating key names like "lat", "lng", etc.
+  
   function markersToCompressedData() {
     const compactData = markers.map(m => {
       const { lat, lng } = m.getLatLng();
       return [
-        parseFloat(lat.toFixed(6)), // Round to 6 decimal places for precision and smaller size
+        parseFloat(lat.toFixed(6)),
         parseFloat(lng.toFixed(6)),
         m.options.title,
         m.options.timestamp
@@ -197,8 +653,7 @@ window.onload = function() {
     });
     return JSON.stringify(compactData);
   }
-
-  // Old function for backward compatibility
+  
   const markerToJSON = m => {
     const { lat, lng } = m.getLatLng();
     return {
@@ -209,12 +664,24 @@ window.onload = function() {
     };
   };
   const markersToOldJSONString = () => JSON.stringify(markers.map(markerToJSON));
-
-  // Build the popup HTML for a marker
-  const buildMarkerPopup = marker => `<div class="marker-popup"><h3>${marker.options.title}</h3><p>${marker.options.timestamp}</p><small>${marker.options.coords}</small><div style="display:flex;justify-content:center;gap:4px;margin-top:10px;"><button id="editBtn" class="action-btn edit-action">✏️</button><button id="deleteBtn" class="action-btn delete-action">🗑️</button></div></div>`;
-
-  // Save and load markers
-  // The save function has been updated to use the new compressed format.
+  
+  // A new function to build the marker popup with the "Get Cow Fact" button
+  const buildMarkerPopup = marker => {
+    // Add the AI fact section to the popup
+    const popupHtml = `<div class="marker-popup">
+      <h3>${marker.options.title}</h3>
+      <p>${marker.options.timestamp}</p>
+      <small>${marker.options.coords}</small>
+      <p id="fact-display-${marker.options.id}" style="font-size: 0.9rem; margin-top: 10px;"></p>
+      <div style="display:flex;justify-content:center;gap:4px;margin-top:10px;">
+        <button id="editBtn" class="action-btn edit-action">✏️</button>
+        <button id="deleteBtn" class="action-btn delete-action">🗑️</button>
+        <button id="getFactBtn" class="action-btn gemini-btn" data-tooltip="Get a Fun Fact">🧠</button>
+      </div>
+    </div>`;
+    return popupHtml;
+  };
+  
   function saveMarkers() { localStorage.setItem('cowMarkers', markersToCompressedData()); }
   
   function loadMarkers() {
@@ -222,11 +689,13 @@ window.onload = function() {
     if (!stored) return;
     loadFromJSON(stored);
   }
-
+  
   function addCowMarker(lat, lng, name = DEFAULT_COW_NAME(), time = new Date().toLocaleString()) {
+    const markerId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     const marker = L.marker([lat, lng], {
       icon: L.divIcon({ className: 'cow-marker', html: '🐄' }),
-      title: name
+      title: name,
+      id: markerId
     });
     marker.options.coords = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
     marker.options.timestamp = time;
@@ -259,14 +728,24 @@ window.onload = function() {
     const { lat, lng } = marker.getLatLng(),
       popupContent = document.createElement('div');
     popupContent.classList.add('edit-popup-content');
-    popupContent.innerHTML = `<h3>Edit Cow Name</h3><input type="text" id="cowNameInput" value="${marker.options.title}"><div style="display:flex;justify-content:center;gap:8px;"><button class="save-btn">💾</button><button class="cancel-btn">✖️</button></div>`;
+    // Added a "Generate Name" button to the edit popup
+    popupContent.innerHTML = `<h3>Edit Cow Name</h3>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="text" id="cowNameInput" value="${marker.options.title}">
+        <button id="generateNameBtn" class="action-btn gemini-btn" data-tooltip="Generate a new name">✨</button>
+      </div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;">
+        <button class="save-btn">💾</button>
+        <button class="cancel-btn">✖️</button>
+      </div>`;
     const popup = L.popup({
       closeButton: false,
       closeOnClick: false
     }).setLatLng([lat, lng]).setContent(popupContent).openOn(map);
     const nameInput = popupContent.querySelector('#cowNameInput'),
       saveBtn = popupContent.querySelector('.save-btn'),
-      cancelBtn = popupContent.querySelector('.cancel-btn');
+      cancelBtn = popupContent.querySelector('.cancel-btn'),
+      generateNameBtn = popupContent.querySelector('#generateNameBtn');
 
     if (COW_NAMES.includes(marker.options.title)) {
       nameInput.select();
@@ -285,9 +764,13 @@ window.onload = function() {
       saveMarkers();
     });
     cancelBtn.addEventListener('click', () => popup.remove());
+    
+    // Event listener for the new "Generate Name" button
+    generateNameBtn.addEventListener('click', async () => {
+      await getCreativeName(nameInput, generateNameBtn, marker);
+    });
   }
-
-  // UI modal functions
+  
   function showConfirmationModal(msg, onConfirm) {
     const html = `<div id="confirmOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><div style="display:flex;justify-content:center;gap:10px;margin-top:15px;"><button class="confirm-btn">Yes</button><button class="cancel-btn">No</button></div></div></div>`;
     body.insertAdjacentHTML('beforeend', html);
@@ -297,7 +780,6 @@ window.onload = function() {
       overlay.remove();
     });
     overlay.querySelector('.cancel-btn').addEventListener('click', () => overlay.remove());
-    // Also add a click handler on the overlay itself to close it
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         overlay.remove();
@@ -309,7 +791,6 @@ window.onload = function() {
     body.insertAdjacentHTML('beforeend', html);
     const overlay = document.getElementById('alertOverlay');
     overlay.querySelector('.ok-btn').addEventListener('click', () => overlay.remove());
-    // Also add a click handler on the overlay itself to close it
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         overlay.remove();
@@ -323,12 +804,86 @@ window.onload = function() {
       scanVideo.srcObject = null;
     }
   }
+  
+  // --- NEW: GEMINI API UTILITY FUNCTIONS ---
+  async function callGeminiAPI(prompt) {
+    const apiKey = "";
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    const payload = {
+      contents: [{
+        role: "user",
+        parts: [{ text: prompt }]
+      }]
+    };
 
-  // Main function to load markers from JSON data, handling both old and new formats
+    let retryCount = 0;
+    const maxRetries = 5;
+    const baseDelay = 1000;
+
+    while (retryCount < maxRetries) {
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 429) {
+          retryCount++;
+          const delay = baseDelay * Math.pow(2, retryCount - 1);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        if (!response.ok) {
+          console.error('API response not OK:', await response.text());
+          throw new Error('API call failed');
+        }
+
+        const result = await response.json();
+        if (result.candidates && result.candidates.length > 0 &&
+          result.candidates[0].content && result.candidates[0].content.parts &&
+          result.candidates[0].content.parts.length > 0) {
+          return result.candidates[0].content.parts[0].text;
+        } else {
+          return "I'm sorry, I couldn't generate a fact right now. Please try again.";
+        }
+      } catch (error) {
+        console.error('Error calling Gemini API:', error);
+        return "Failed to get a response from the AI. Please check your network connection.";
+      }
+    }
+    return "The AI service is currently unavailable. Please try again later.";
+  }
+
+  async function getNewCowFact(marker) {
+    const factDisplay = document.getElementById(`fact-display-${marker.options.id}`);
+    if (!factDisplay) return;
+
+    factDisplay.innerHTML = '<div class="spinner"></div>'; // Show loading spinner
+    const prompt = "Give me a single, short, and fun fact about cows. Just the fact, no conversational text, no headings, no greetings, no closing remarks. For example: 'Cows have a single stomach with four compartments.'";
+    const fact = await callGeminiAPI(prompt);
+    factDisplay.innerHTML = fact;
+  }
+
+  async function getCreativeName(nameInput, generateNameBtn, marker) {
+    generateNameBtn.innerHTML = '<div class="spinner"></div>'; // Show loading spinner
+    generateNameBtn.disabled = true;
+
+    const coords = marker.options.coords;
+    const prompt = `Generate a creative and unique name for a cow marker located at the coordinates: ${coords}. The name should be whimsical, fun, and related to the location. Just give me the name, nothing else. For example: "Field-of-Dreams-Daisy" or "Latté-tude Louis."`;
+    
+    const generatedName = await callGeminiAPI(prompt);
+    nameInput.value = generatedName;
+
+    generateNameBtn.innerHTML = '✨'; // Restore button
+    generateNameBtn.disabled = false;
+  }
+  // --- END NEW: GEMINI API UTILITY FUNCTIONS ---
+  
   function loadFromJSON(json) {
     try {
       const data = JSON.parse(json);
-      // Check for the compressed format (array of arrays)
       if (Array.isArray(data) && data.every(c => Array.isArray(c) && c.length === 4)) {
         markers.forEach(m => {
           if (isGroupingEnabled) {
@@ -341,9 +896,7 @@ window.onload = function() {
         cowMarkers.clearLayers();
         data.forEach(c => addCowMarker(c[0], c[1], c[2], c[3]));
         showAlertDialog(`Loaded map from new compressed format!`);
-      } 
-      // Fallback to the old format (array of objects)
-      else if (Array.isArray(data) && data.every(c => typeof c.lat === 'number' && typeof c.lng === 'number' && typeof c.name === 'string')) {
+      } else if (Array.isArray(data) && data.every(c => typeof c.lat === 'number' && typeof c.lng === 'number' && typeof c.name === 'string')) {
         markers.forEach(m => {
           if (isGroupingEnabled) {
             cowMarkers.removeLayer(m);
@@ -360,7 +913,6 @@ window.onload = function() {
       }
       saveMarkers();
       if (markers.length > 0) map.setView(markers[0].getLatLng(), CURRENT_LOCATION_ZOOM);
-      // Ensure the correct layer is on the map after loading
       if (isGroupingEnabled) {
         if (!map.hasLayer(cowMarkers)) {
           map.addLayer(cowMarkers);
@@ -374,7 +926,7 @@ window.onload = function() {
       showAlertDialog('Invalid QR code data format or data is corrupt.');
     }
   }
-
+  
   function startScan() {
     const canvas = document.createElement('canvas'),
       ctx = canvas.getContext('2d');
@@ -407,21 +959,19 @@ window.onload = function() {
       requestAnimationFrame(tick);
     })();
   }
-
-  // Map init
+  
   const map = L.map('map').setView([34.95, -120.43], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
-
-  // Initialize marker cluster group with custom icon. This version uses a fixed-size icon.
+  
   const cowMarkers = L.markerClusterGroup({
     iconCreateFunction: function(cluster) {
       const count = cluster.getChildCount();
       const size = 50;
       const className = 'cow-cluster-icon';
-
+      
       return L.divIcon({
         html: `<div class="content-wrapper"><span class="cow-emoji">🐄</span><span class="count">${count}</span></div>`,
         className: className,
@@ -429,32 +979,28 @@ window.onload = function() {
       });
     }
   });
-
-  // Initial state for grouping
+  
   if (isGroupingEnabled) {
     map.addLayer(cowMarkers);
   }
-
-  let ignoreNextMapClick = false;
-
+  
   map.on('popupclose', () => {
     activeMarker = null;
-    ignoreNextMapClick = true;
   });
-
+  
   map.on('click', e => {
-    if (ignoreNextMapClick) {
-      ignoreNextMapClick = false;
+    // FIX: Check directly if the menu is visible to prevent placing a cow.
+    if (sideMenu.classList.contains('visible')) {
       return;
     }
-    // Prevent adding a marker if any modal is currently visible
+    
     if (document.querySelector('.overlay.visible')) return;
-
+    
     showConfirmationModal("Add a new cow marker here?", () => {
       addCowMarker(e.latlng.lat, e.latlng.lng);
     });
   });
-
+  
   map.on('popupopen', e => {
     const m = e.popup._source;
     activeMarker = m;
@@ -468,14 +1014,17 @@ window.onload = function() {
       ev.stopPropagation();
       showConfirmationModal("Delete this marker?", () => deleteMarker(m));
     });
+    // Event listener for the new "Get Cow Fact" button
+    el.querySelector('#getFactBtn')?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      await getNewCowFact(m);
+    });
   });
   map.on('popupclose', () => activeMarker = null);
-
-  // Locate toggle logic
+  
   if (locateBtn) {
     locateBtn.onclick = () => {
       if (!isTracking) {
-        // start tracking
         map.locate({
           setView: true,
           maxZoom: CURRENT_LOCATION_ZOOM,
@@ -486,7 +1035,6 @@ window.onload = function() {
         locateBtn.dataset.tooltip = 'Stop Tracking';
         locateBtn.textContent = '📍';
       } else {
-        // stop tracking
         map.stopLocate();
         isTracking = false;
         locateBtn.classList.remove('tracking');
@@ -500,7 +1048,7 @@ window.onload = function() {
     };
     locateBtn.setAttribute('aria-label', 'Toggle location tracking');
   }
-
+  
   map.on('locationfound', e => {
     if (!locationMarker) {
       locationMarker = L.marker(e.latlng, {
@@ -529,8 +1077,7 @@ window.onload = function() {
       }
     }
   });
-
-  // Other UI bindings
+  
   if (clearBtn) {
     clearBtn.onclick = () => showConfirmationModal("Clear all cow markers?", () => {
       if (isGroupingEnabled) {
@@ -572,8 +1119,7 @@ window.onload = function() {
       }).catch(() => scanMessage.textContent = 'Camera access error.');
     };
   }
-
-  // Bind download button, which is always in the QR overlay
+  
   if (downloadQRBtn) {
     downloadQRBtn.onclick = () => {
       const qrCanvas = qrContainer.querySelector('canvas');
@@ -591,7 +1137,6 @@ window.onload = function() {
     };
   }
   
-  // New binding for closing the overlays when clicking outside the popup
   if (qrOverlay) {
     qrOverlay.onclick = (e) => {
       if (e.target === qrOverlay) {
@@ -599,7 +1144,7 @@ window.onload = function() {
       }
     };
   }
-
+  
   if (scanOverlay) {
     scanOverlay.onclick = (e) => {
       if (e.target === scanOverlay) {
@@ -608,7 +1153,7 @@ window.onload = function() {
       }
     };
   }
-
+  
   if (importQRBtn) {
     importQRBtn.onclick = () => importQRInput.click();
   }
@@ -640,9 +1185,20 @@ window.onload = function() {
       r.readAsDataURL(file);
     };
   }
+  
   if (menuBtn) {
-    menuBtn.onclick = () => sideMenu.classList.toggle('visible');
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sideMenu.classList.toggle('visible');
+    });
   }
+  
+  document.addEventListener('click', (e) => {
+    if (sideMenu.classList.contains('visible') && !sideMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+      sideMenu.classList.remove('visible');
+    }
+  });
+  
   if (darkModeToggleBtn) {
     darkModeToggleBtn.onclick = () => {
       isDarkMode = !isDarkMode;
@@ -653,26 +1209,21 @@ window.onload = function() {
       localStorage.setItem('darkMode', isDarkMode);
     };
   }
-
-  // New binding for the splash screen button
+  
   if (showSplashBtn) {
     showSplashBtn.onclick = () => {
-      // Show the splash screen overlay again
       if (splashScreen) {
         splashScreen.classList.add('visible');
       }
     };
   }
-
-  // New binding for GitHub link button
+  
   if (githubLinkBtn) {
       githubLinkBtn.onclick = () => {
           window.open('https://github.com/topazlad/moo-moo-markers', '_blank');
       };
   }
   
-
-  // Grouping Toggle
   const updateGroupingBtn = () => {
     if (!groupingToggleBtn) {
       console.error('Error: "groupingToggleBtn" element not found.');
@@ -680,21 +1231,18 @@ window.onload = function() {
     }
     groupingToggleBtn.classList.toggle('toggle-off', !isGroupingEnabled);
     groupingToggleBtn.dataset.tooltip = `Toggle Marker Grouping (${isGroupingEnabled ? 'On' : 'Off'})`;
-    // Change the emoji based on the state
     const emojiSpan = groupingToggleBtn.querySelector('.emoji');
     if (emojiSpan) {
       emojiSpan.textContent = isGroupingEnabled ? '🗂️' : '📁';
     }
   };
-
-  // Check if the button element exists before trying to assign an event handler and call the function initially
+  
   if (groupingToggleBtn) {
     groupingToggleBtn.onclick = () => {
       isGroupingEnabled = !isGroupingEnabled;
       localStorage.setItem('groupingEnabled', isGroupingEnabled);
       updateGroupingBtn();
-
-      // First, remove all markers from the map and cluster group to start fresh
+      
       if (map.hasLayer(cowMarkers)) {
         map.removeLayer(cowMarkers);
       }
@@ -702,7 +1250,6 @@ window.onload = function() {
         if (map.hasLayer(m)) map.removeLayer(m);
       });
       
-      // Then, add them back to the correct place based on the new state
       if (isGroupingEnabled) {
         cowMarkers.clearLayers();
         cowMarkers.addLayers(markers);
@@ -715,8 +1262,7 @@ window.onload = function() {
     };
     updateGroupingBtn();
   }
-
-  // Splash screen and tooltip bindings with null checks
+  
   if (localStorage.getItem('showSplashScreen') !== 'false' && splashScreen) splashScreen.classList.add('visible');
   const okBtn = splashScreen ? splashScreen.querySelector('.ok-btn') : null;
   if (okBtn) {
@@ -731,8 +1277,7 @@ window.onload = function() {
       stopCamera();
     });
   });
-
-  // Tooltip logic split for desktop vs. touch devices
+  
   document.querySelectorAll('[data-tooltip]').forEach(btn => {
     let t, timeout;
     const show = () => {
@@ -759,7 +1304,6 @@ window.onload = function() {
     };
     
     if (isTouchDevice) {
-      // Long press logic for touch devices
       let longPressTimeout;
       const handleTouchStart = () => {
         longPressTimeout = setTimeout(show, LONG_PRESS_DURATION);
@@ -771,14 +1315,13 @@ window.onload = function() {
       
       btn.addEventListener('touchstart', handleTouchStart);
       btn.addEventListener('touchend', handleTouchEnd);
-      btn.addEventListener('touchmove', handleTouchEnd); // Cancel on touchmove
+      btn.addEventListener('touchmove', handleTouchEnd);
     } else {
-      // Standard hover logic for desktop
       btn.onmouseenter = show;
       btn.onmouseleave = hide;
     }
   });
-
+  
   if (body) {
     body.classList.toggle('dark-mode', isDarkMode);
   }
