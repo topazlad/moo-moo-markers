@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Moo Moo Markers v1.4.2 beta - Modified Map Click Behavior</title>
-<!-- v1.4.2 beta: Changed map click behavior to close open popups and updated version number. -->
+<title>Moo Moo Markers v1.6.2 - Search Function</title>
 <style>
 /* Basic reset */
 * { box-sizing: border-box; }
@@ -226,6 +225,30 @@ body.dark-mode .leaflet-popup-content-wrapper {
 }
 body.dark-mode .leaflet-popup-tip {
   background: #1e1e1e;
+}
+
+/* Close button styling */
+.close-popup-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  font-weight: bold;
+  line-height: 1;
+  transition: color 0.2s ease;
+  padding: 4px;
+}
+
+.close-popup-btn:hover {
+  color: #e74c3c;
+}
+body.dark-mode .close-popup-btn {
+  color: #ccc;
+}
+body.dark-mode .close-popup-btn:hover {
+  color: #e74c3c;
 }
 
 /* Precise vertical alignment for marker cluster icon */
@@ -457,10 +480,10 @@ body.dark-mode .leaflet-popup-tip {
   border-style: solid;
   border-color: rgba(0,0,0,.85) transparent transparent transparent;
 }
-.edit-popup-content {
+.edit-popup-content, .search-popup-content {
   text-align: center;
 }
-.edit-popup-content input {
+.edit-popup-content input, .search-popup-content input {
   width: 100%;
   padding: 8px;
   border-radius: 8px;
@@ -527,13 +550,14 @@ body.dark-mode .toggle-off:hover {
 </nav>
 
 <div id="side-menu">
+  <button id="searchBtn" data-tooltip="Find a Cow">🔍</button>
   <button id="groupingToggleBtn" data-tooltip="Toggle Marker Grouping">
     <span class="emoji">🗂️</span>
   </button>
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
   <button id="showSplashBtn" data-tooltip="Show Welcome Screen">?</button>
   <button id="githubLinkBtn" data-tooltip="View on GitHub">🐙</button>
-  <div id="version-number">v1.4.2 beta</div>
+  <div id="version-number">v1.6.2</div>
 </div>
 
 <div id="splash-screen" class="overlay">
@@ -566,6 +590,19 @@ body.dark-mode .toggle-off:hover {
     <h2 id="scanTitle">Scan Cow Map QR Code</h2>
     <video id="video" autoplay playsinline></video>
     <p id="scanMessage">Point camera at a QR code</p>
+  </div>
+</div>
+
+<div id="searchOverlay" class="overlay">
+  <div class="popup">
+    <h2 id="searchTitle">Find a Cow</h2>
+    <div class="search-popup-content">
+      <input type="text" id="cowSearchInput" placeholder="Enter cow's name">
+    </div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;">
+      <button class="action-btn save-btn" id="searchExecuteBtn">🔍</button>
+      <button class="action-btn cancel-btn" id="searchCancelBtn">✖️</button>
+    </div>
   </div>
 </div>
 
@@ -606,6 +643,9 @@ window.onload = function() {
         scanOverlay = document.getElementById('scanOverlay'),
         scanVideo = document.getElementById('video'),
         scanMessage = document.getElementById('scanMessage'),
+        searchOverlay = document.getElementById('searchOverlay'),
+        cowSearchInput = document.getElementById('cowSearchInput'),
+        searchBtn = document.getElementById('searchBtn'),
         importQRInput = document.getElementById('importQRInput'),
         locateBtn = document.getElementById('locateBtn'),
         downloadQRBtn = document.getElementById('downloadQRBtn');
@@ -639,9 +679,9 @@ window.onload = function() {
   };
   const markersToOldJSONString = () => JSON.stringify(markers.map(markerToJSON));
   
-  // A new function to build the marker popup without the Gemini buttons
   const buildMarkerPopup = marker => {
     const popupHtml = `<div class="marker-popup">
+      <span class="close-popup-btn">×</span>
       <h3>${marker.options.title}</h3>
       <p>${marker.options.timestamp}</p>
       <small>${marker.options.coords}</small>
@@ -876,12 +916,10 @@ window.onload = function() {
   });
   
   map.on('click', e => {
-    // Check if the side menu or any overlay is open
     if (sideMenu.classList.contains('visible') || document.querySelector('.overlay.visible')) {
       return;
     }
     
-    // If a marker popup is open, close it instead of adding a new cow
     if (activeMarker) {
       map.closePopup();
       return;
@@ -896,6 +934,13 @@ window.onload = function() {
     const m = e.popup._source;
     activeMarker = m;
     const el = e.popup.getElement();
+
+    // Event listener for the new close button
+    el.querySelector('.close-popup-btn')?.addEventListener('click', ev => {
+      ev.stopPropagation();
+      map.closePopup();
+    });
+
     el.querySelector('#editBtn')?.addEventListener('click', ev => {
       ev.stopPropagation();
       map.closePopup();
@@ -1069,6 +1114,56 @@ window.onload = function() {
         img.src = ev.target.result;
       };
       r.readAsDataURL(file);
+    };
+  }
+
+  // New search functionality
+  function handleSearch() {
+    const searchTerm = cowSearchInput.value.trim().toLowerCase();
+    if (!searchTerm) {
+      showAlertDialog('Please enter a cow name to search for.');
+      return;
+    }
+
+    const foundMarker = markers.find(m => m.options.title.toLowerCase() === searchTerm);
+    if (foundMarker) {
+      map.setView(foundMarker.getLatLng(), CURRENT_LOCATION_ZOOM);
+      foundMarker.openPopup();
+      searchOverlay.classList.remove('visible');
+    } else {
+      showAlertDialog(`Cow named "${cowSearchInput.value}" not found.`);
+    }
+  }
+
+  if (searchBtn) {
+    searchBtn.onclick = () => {
+      searchOverlay.classList.add('visible');
+      cowSearchInput.value = '';
+      setTimeout(() => cowSearchInput.focus(), 100);
+    };
+  }
+  
+  if (document.getElementById('searchExecuteBtn')) {
+    document.getElementById('searchExecuteBtn').onclick = handleSearch;
+  }
+
+  if (document.getElementById('searchCancelBtn')) {
+    document.getElementById('searchCancelBtn').onclick = () => {
+      searchOverlay.classList.remove('visible');
+    };
+  }
+  
+  if (cowSearchInput) {
+    cowSearchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSearch();
+    });
+  }
+
+  if (searchOverlay) {
+    searchOverlay.onclick = (e) => {
+      if (e.target === searchOverlay) {
+        searchOverlay.classList.remove('visible');
+      }
     };
   }
   
