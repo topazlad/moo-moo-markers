@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Moo Moo Markers v1.4.1 beta</title>
-<!-- v1.4.1 beta: Fixed a typo in the localStorage call (localStorage.item was corrected to localStorage.getItem). -->
+<title>Moo Moo Markers v1.4.2 beta - Modified Map Click Behavior</title>
+<!-- v1.4.2 beta: Changed map click behavior to close open popups and updated version number. -->
 <style>
 /* Basic reset */
 * { box-sizing: border-box; }
@@ -181,18 +181,6 @@ button:active {
   font-size: 1.5rem;
   width: 50px;
   height: 50px;
-}
-.gemini-btn {
-  background: linear-gradient(145deg, #9b59b6, #8e44ad);
-  color: #fff;
-  box-shadow: 5px 5px 10px #703c8c, -5px -5px 10px #ae66d1;
-}
-.gemini-btn:hover {
-  box-shadow: 6px 6px 12px #703c8c, -6px -6px 12px #ae66d1;
-}
-.gemini-btn:active {
-  background: #703c8c;
-  box-shadow: inset 2px 2px 6px #512b6b;
 }
 p#instructions {
   text-align: center;
@@ -516,20 +504,6 @@ body.dark-mode .toggle-off:hover {
   box-shadow: inset 2px 2px 6px #050505,-6px -6px 12px #323232!important;
 }
 
-.spinner {
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top: 4px solid #fff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -559,7 +533,7 @@ body.dark-mode .toggle-off:hover {
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
   <button id="showSplashBtn" data-tooltip="Show Welcome Screen">?</button>
   <button id="githubLinkBtn" data-tooltip="View on GitHub">🐙</button>
-  <div id="version-number">v1.4.1 beta</div>
+  <div id="version-number">v1.4.2 beta</div>
 </div>
 
 <div id="splash-screen" class="overlay">
@@ -665,18 +639,15 @@ window.onload = function() {
   };
   const markersToOldJSONString = () => JSON.stringify(markers.map(markerToJSON));
   
-  // A new function to build the marker popup with the "Get Cow Fact" button
+  // A new function to build the marker popup without the Gemini buttons
   const buildMarkerPopup = marker => {
-    // Add the AI fact section to the popup
     const popupHtml = `<div class="marker-popup">
       <h3>${marker.options.title}</h3>
       <p>${marker.options.timestamp}</p>
       <small>${marker.options.coords}</small>
-      <p id="fact-display-${marker.options.id}" style="font-size: 0.9rem; margin-top: 10px;"></p>
       <div style="display:flex;justify-content:center;gap:4px;margin-top:10px;">
         <button id="editBtn" class="action-btn edit-action">✏️</button>
         <button id="deleteBtn" class="action-btn delete-action">🗑️</button>
-        <button id="getFactBtn" class="action-btn gemini-btn" data-tooltip="Get a Fun Fact">🧠</button>
       </div>
     </div>`;
     return popupHtml;
@@ -728,11 +699,9 @@ window.onload = function() {
     const { lat, lng } = marker.getLatLng(),
       popupContent = document.createElement('div');
     popupContent.classList.add('edit-popup-content');
-    // Added a "Generate Name" button to the edit popup
     popupContent.innerHTML = `<h3>Edit Cow Name</h3>
       <div style="display:flex;align-items:center;gap:8px;">
         <input type="text" id="cowNameInput" value="${marker.options.title}">
-        <button id="generateNameBtn" class="action-btn gemini-btn" data-tooltip="Generate a new name">✨</button>
       </div>
       <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;">
         <button class="save-btn">💾</button>
@@ -744,8 +713,7 @@ window.onload = function() {
     }).setLatLng([lat, lng]).setContent(popupContent).openOn(map);
     const nameInput = popupContent.querySelector('#cowNameInput'),
       saveBtn = popupContent.querySelector('.save-btn'),
-      cancelBtn = popupContent.querySelector('.cancel-btn'),
-      generateNameBtn = popupContent.querySelector('#generateNameBtn');
+      cancelBtn = popupContent.querySelector('.cancel-btn');
 
     if (COW_NAMES.includes(marker.options.title)) {
       nameInput.select();
@@ -764,11 +732,6 @@ window.onload = function() {
       saveMarkers();
     });
     cancelBtn.addEventListener('click', () => popup.remove());
-    
-    // Event listener for the new "Generate Name" button
-    generateNameBtn.addEventListener('click', async () => {
-      await getCreativeName(nameInput, generateNameBtn, marker);
-    });
   }
   
   function showConfirmationModal(msg, onConfirm) {
@@ -804,82 +767,6 @@ window.onload = function() {
       scanVideo.srcObject = null;
     }
   }
-  
-  // --- NEW: GEMINI API UTILITY FUNCTIONS ---
-  async function callGeminiAPI(prompt) {
-    const apiKey = "";
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-    const payload = {
-      contents: [{
-        role: "user",
-        parts: [{ text: prompt }]
-      }]
-    };
-
-    let retryCount = 0;
-    const maxRetries = 5;
-    const baseDelay = 1000;
-
-    while (retryCount < maxRetries) {
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (response.status === 429) {
-          retryCount++;
-          const delay = baseDelay * Math.pow(2, retryCount - 1);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
-        }
-        
-        if (!response.ok) {
-          console.error('API response not OK:', await response.text());
-          throw new Error('API call failed');
-        }
-
-        const result = await response.json();
-        if (result.candidates && result.candidates.length > 0 &&
-          result.candidates[0].content && result.candidates[0].content.parts &&
-          result.candidates[0].content.parts.length > 0) {
-          return result.candidates[0].content.parts[0].text;
-        } else {
-          return "I'm sorry, I couldn't generate a fact right now. Please try again.";
-        }
-      } catch (error) {
-        console.error('Error calling Gemini API:', error);
-        return "Failed to get a response from the AI. Please check your network connection.";
-      }
-    }
-    return "The AI service is currently unavailable. Please try again later.";
-  }
-
-  async function getNewCowFact(marker) {
-    const factDisplay = document.getElementById(`fact-display-${marker.options.id}`);
-    if (!factDisplay) return;
-
-    factDisplay.innerHTML = '<div class="spinner"></div>'; // Show loading spinner
-    const prompt = "Give me a single, short, and fun fact about cows. Just the fact, no conversational text, no headings, no greetings, no closing remarks. For example: 'Cows have a single stomach with four compartments.'";
-    const fact = await callGeminiAPI(prompt);
-    factDisplay.innerHTML = fact;
-  }
-
-  async function getCreativeName(nameInput, generateNameBtn, marker) {
-    generateNameBtn.innerHTML = '<div class="spinner"></div>'; // Show loading spinner
-    generateNameBtn.disabled = true;
-
-    const coords = marker.options.coords;
-    const prompt = `Generate a creative and unique name for a cow marker located at the coordinates: ${coords}. The name should be whimsical, fun, and related to the location. Just give me the name, nothing else. For example: "Field-of-Dreams-Daisy" or "Latté-tude Louis."`;
-    
-    const generatedName = await callGeminiAPI(prompt);
-    nameInput.value = generatedName;
-
-    generateNameBtn.innerHTML = '✨'; // Restore button
-    generateNameBtn.disabled = false;
-  }
-  // --- END NEW: GEMINI API UTILITY FUNCTIONS ---
   
   function loadFromJSON(json) {
     try {
@@ -989,12 +876,16 @@ window.onload = function() {
   });
   
   map.on('click', e => {
-    // FIX: Check directly if the menu is visible to prevent placing a cow.
-    if (sideMenu.classList.contains('visible')) {
+    // Check if the side menu or any overlay is open
+    if (sideMenu.classList.contains('visible') || document.querySelector('.overlay.visible')) {
       return;
     }
     
-    if (document.querySelector('.overlay.visible')) return;
+    // If a marker popup is open, close it instead of adding a new cow
+    if (activeMarker) {
+      map.closePopup();
+      return;
+    }
     
     showConfirmationModal("Add a new cow marker here?", () => {
       addCowMarker(e.latlng.lat, e.latlng.lng);
@@ -1013,11 +904,6 @@ window.onload = function() {
     el.querySelector('#deleteBtn')?.addEventListener('click', ev => {
       ev.stopPropagation();
       showConfirmationModal("Delete this marker?", () => deleteMarker(m));
-    });
-    // Event listener for the new "Get Cow Fact" button
-    el.querySelector('#getFactBtn')?.addEventListener('click', async (ev) => {
-      ev.stopPropagation();
-      await getNewCowFact(m);
     });
   });
   map.on('popupclose', () => activeMarker = null);
