@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Moo Moo Markers v1.6.3 - Uniform Button Size</title>
-<!-- v1.6.3: Ensured all menu buttons have a consistent size. -->
+<title>Moo Moo Markers v1.6.8 - CSV Support</title>
+<!-- v1.6.8: Added CSV export/import for large maps. -->
+<!-- v1.6.7: Fixed a null reference error on load related to the splash screen. -->
+<!-- v1.6.6: Removed the download code button. -->
+<!-- v1.6.5: Added a button to download the HTML file. -->
+<!-- v1.6.4: Fixed map view resetting while tracking location. -->
 <style>
 /* Basic reset */
 * { box-sizing: border-box; }
@@ -549,6 +553,7 @@ body.dark-mode .toggle-off:hover {
   <button id="scanQRBtn" data-tooltip="Scan QR Code">📷</button>
   <button id="importQRBtn" data-tooltip="Import Map from Image">📂</button>
   <input type="file" id="importQRInput" accept="image/*">
+  <input type="file" id="importCSVInput" accept=".csv" style="display: none;">
   <button id="clearBtn" data-tooltip="Clear All Cows">❌</button>
 </nav>
 
@@ -558,9 +563,11 @@ body.dark-mode .toggle-off:hover {
     <span class="emoji">🗂️</span>
   </button>
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
+  <button id="exportCSVBtn" data-tooltip="Export as CSV">📄</button>
+  <button id="importCSVBtn" data-tooltip="Import from CSV">📥</button>
   <button id="showSplashBtn" data-tooltip="Show Welcome Screen">?</button>
   <button id="githubLinkBtn" data-tooltip="View on GitHub">🐙</button>
-  <div id="version-number">v1.6.3</div>
+  <div id="version-number">v1.6.8</div>
 </div>
 
 <div id="splash-screen" class="overlay">
@@ -620,7 +627,8 @@ window.onload = function() {
   const CURRENT_LOCATION_ZOOM = 13,
         QR_SIZE = 256,
         SCAN_THROTTLE_MS = 100,
-        LONG_PRESS_DURATION = 500;
+        LONG_PRESS_DURATION = 500,
+        MAX_QR_DATA_LENGTH = 2500;
   
   const markers = [];
   let activeMarker = null,
@@ -634,7 +642,6 @@ window.onload = function() {
   
   const body = document.body,
         splashScreen = document.getElementById('splash-screen'),
-        doNotShowAgainCheckbox = document.getElementById('doNotShowAgainCheckbox'),
         darkModeToggleBtn = document.getElementById('darkModeToggleBtn'),
         groupingToggleBtn = document.getElementById('groupingToggleBtn'),
         showSplashBtn = document.getElementById('showSplashBtn'),
@@ -650,6 +657,9 @@ window.onload = function() {
         cowSearchInput = document.getElementById('cowSearchInput'),
         searchBtn = document.getElementById('searchBtn'),
         importQRInput = document.getElementById('importQRInput'),
+        importCSVInput = document.getElementById('importCSVInput'),
+        exportCSVBtn = document.getElementById('exportCSVBtn'),
+        importCSVBtn = document.getElementById('importCSVBtn'),
         locateBtn = document.getElementById('locateBtn'),
         downloadQRBtn = document.getElementById('downloadQRBtn');
   
@@ -856,6 +866,78 @@ window.onload = function() {
       showAlertDialog('Invalid QR code data format or data is corrupt.');
     }
   }
+
+  function exportToCSV() {
+    if (markers.length === 0) {
+        showAlertDialog('No cows to export!');
+        return;
+    }
+
+    const headers = ['lat', 'lng', 'name', 'timestamp'];
+    const csvRows = [headers.join(',')];
+
+    markers.forEach(m => {
+        const { lat, lng } = m.getLatLng();
+        const name = `"${m.options.title.replace(/"/g, '""')}"`;
+        const timestamp = `"${m.options.timestamp.replace(/"/g, '""')}"`;
+        csvRows.push([lat, lng, name, timestamp].join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'moo-moo-markers.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function loadFromCSV(csvText) {
+    try {
+        const rows = csvText.split('\n').map(r => r.trim()).filter(Boolean);
+        if (rows.length < 2) throw new Error("CSV has no data.");
+
+        const headers = rows.shift().split(',').map(h => h.trim());
+        const latIndex = headers.indexOf('lat');
+        const lngIndex = headers.indexOf('lng');
+        const nameIndex = headers.indexOf('name');
+        const timestampIndex = headers.indexOf('timestamp');
+
+        if (latIndex === -1 || lngIndex === -1 || nameIndex === -1) {
+            throw new Error("CSV must contain 'lat', 'lng', and 'name' columns.");
+        }
+        
+        showConfirmationModal(`This will replace your current map with ${rows.length} cows from the CSV. Continue?`, () => {
+            if (isGroupingEnabled) {
+                cowMarkers.clearLayers();
+            } else {
+                markers.forEach(m => map.removeLayer(m));
+            }
+            markers.length = 0;
+
+            rows.forEach(row => {
+                const values = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(val => val.replace(/^"|"$/g, '').replace(/""/g, '"'));
+                const lat = parseFloat(values[latIndex]);
+                const lng = parseFloat(values[lngIndex]);
+                const name = values[nameIndex];
+                const timestamp = timestampIndex > -1 ? values[timestampIndex] : new Date().toLocaleString();
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    addCowMarker(lat, lng, name, timestamp);
+                }
+            });
+            saveMarkers();
+            showAlertDialog('Map loaded from CSV!');
+        });
+
+    } catch (e) {
+        showAlertDialog(`Error loading from CSV: ${e.message}`);
+        console.error(e);
+    }
+  }
   
   function startScan() {
     const canvas = document.createElement('canvas'),
@@ -960,7 +1042,8 @@ window.onload = function() {
     locateBtn.onclick = () => {
       if (!isTracking) {
         map.locate({
-          setView: true,
+          // BUG FIX: setView is false to prevent map from resetting zoom on update.
+          setView: false,
           maxZoom: CURRENT_LOCATION_ZOOM,
           watch: true
         });
@@ -985,6 +1068,8 @@ window.onload = function() {
   
   map.on('locationfound', e => {
     if (!locationMarker) {
+      // BUG FIX: Manually set the view only on the first location found event.
+      map.setView(e.latlng, CURRENT_LOCATION_ZOOM);
       locationMarker = L.marker(e.latlng, {
         icon: L.divIcon({
           className: 'cow-marker',
@@ -993,6 +1078,7 @@ window.onload = function() {
         title: 'Your Location'
       }).addTo(map);
     } else {
+      // For subsequent updates, just move the marker.
       locationMarker.setLatLng(e.latlng);
     }
   });
@@ -1027,8 +1113,15 @@ window.onload = function() {
   if (showQRBtn) {
     showQRBtn.onclick = () => {
       const data = markersToCompressedData();
+      if (data.length > MAX_QR_DATA_LENGTH) {
+        showConfirmationModal(
+          `The map data is too large for a QR code (${data.length} characters). Would you like to download a CSV file instead?`,
+          exportToCSV
+        );
+        return;
+      }
       qrContainer.innerHTML = '';
-      const qrCode = new QRCode(qrContainer, {
+      new QRCode(qrContainer, {
         text: data,
         width: QR_SIZE,
         height: QR_SIZE,
@@ -1207,6 +1300,30 @@ window.onload = function() {
           window.open('https://github.com/topazlad/moo-moo-markers', '_blank');
       };
   }
+
+  if (exportCSVBtn) {
+    exportCSVBtn.onclick = exportToCSV;
+  }
+
+  if (importCSVBtn) {
+    importCSVBtn.onclick = () => {
+        importCSVInput.click();
+    };
+  }
+
+  if (importCSVInput) {
+    importCSVInput.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            loadFromCSV(event.target.result);
+        };
+        reader.readAsText(file);
+        importCSVInput.value = ''; 
+    };
+  }
   
   const updateGroupingBtn = () => {
     if (!groupingToggleBtn) {
@@ -1247,14 +1364,25 @@ window.onload = function() {
     updateGroupingBtn();
   }
   
-  if (localStorage.getItem('showSplashScreen') !== 'false' && splashScreen) splashScreen.classList.add('visible');
-  const okBtn = splashScreen ? splashScreen.querySelector('.ok-btn') : null;
-  if (okBtn) {
-    okBtn.onclick = () => {
-      if (doNotShowAgainCheckbox.checked) localStorage.setItem('showSplashScreen', 'false');
-      splashScreen.classList.remove('visible');
-    };
+  // Refactored splash screen logic for robustness
+  if (splashScreen) {
+    const okBtn = splashScreen.querySelector('.ok-btn');
+    const doNotShowAgainCheckbox = splashScreen.querySelector('#doNotShowAgainCheckbox');
+
+    if (localStorage.getItem('showSplashScreen') !== 'false') {
+      splashScreen.classList.add('visible');
+    }
+    
+    if (okBtn && doNotShowAgainCheckbox) {
+      okBtn.onclick = () => {
+        if (doNotShowAgainCheckbox.checked) {
+          localStorage.setItem('showSplashScreen', 'false');
+        }
+        splashScreen.classList.remove('visible');
+      };
+    }
   }
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') document.querySelectorAll('.overlay.visible').forEach(o => {
       o.classList.remove('visible');
@@ -1314,3 +1442,4 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
