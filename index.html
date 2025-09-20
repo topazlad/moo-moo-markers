@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Moo Moo Markers v1.6.8 - CSV Support</title>
+<title>Moo Moo Markers v1.7.7 - Tooltip & Keyboard Fix</title>
+<!-- v1.7.7: Fixed persistent tooltips after modal clicks. -->
+<!-- v1.7.6: Added intuitive keyboard controls for dialogs and fixed tooltips. -->
+<!-- v1.7.5: Added option to merge or replace markers on import. -->
+<!-- v1.7.4: Ensured CSV download is robust and added memory cleanup. -->
+<!-- v1.7.3: Implemented a more robust fix for large file CSV exports. -->
+<!-- v1.7.2: Fixed QR code generation and tooltip errors. -->
+<!-- v1.7.1: Fixed CSV export not triggering for large maps. -->
+<!-- v1.7.0: Consolidated QR and CSV import/export into single buttons. -->
+<!-- v1.6.9: Added a "Quick Add" button to drop a cow marker at the user's current location. -->
 <!-- v1.6.8: Added CSV export/import for large maps. -->
 <!-- v1.6.7: Fixed a null reference error on load related to the splash screen. -->
 <!-- v1.6.6: Removed the download code button. -->
@@ -153,6 +161,10 @@ button:active {
   background: #1e7c45;
   box-shadow: inset 2px 2px 6px #144c2d;
 }
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 
 /* Specific styling for other buttons */
 #darkModeToggleBtn.light {
@@ -185,6 +197,12 @@ button:active {
   font-size: 1.5rem;
   width: 50px;
   height: 50px;
+}
+.popup .replace-btn {
+    background: #f39c12;
+}
+.popup .merge-btn {
+    background: #9b59b6;
 }
 p#instructions {
   text-align: center;
@@ -549,11 +567,11 @@ body.dark-mode .toggle-off:hover {
 </div>
 <nav id="controls">
   <button id="locateBtn" data-tooltip="Start Tracking">📍</button>
-  <button id="showQRBtn" data-tooltip="Share Map QR">🖼️</button>
+  <button id="quickAddCowBtn" data-tooltip="Add Cow at My Location">🐮</button>
+  <button id="exportMapBtn" data-tooltip="Export Map">📤</button>
   <button id="scanQRBtn" data-tooltip="Scan QR Code">📷</button>
-  <button id="importQRBtn" data-tooltip="Import Map from Image">📂</button>
-  <input type="file" id="importQRInput" accept="image/*">
-  <input type="file" id="importCSVInput" accept=".csv" style="display: none;">
+  <button id="importMapBtn" data-tooltip="Import Map">📥</button>
+  <input type="file" id="importFileInput" accept="image/*,.csv" style="display: none;">
   <button id="clearBtn" data-tooltip="Clear All Cows">❌</button>
 </nav>
 
@@ -563,11 +581,9 @@ body.dark-mode .toggle-off:hover {
     <span class="emoji">🗂️</span>
   </button>
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
-  <button id="exportCSVBtn" data-tooltip="Export as CSV">📄</button>
-  <button id="importCSVBtn" data-tooltip="Import from CSV">📥</button>
   <button id="showSplashBtn" data-tooltip="Show Welcome Screen">?</button>
   <button id="githubLinkBtn" data-tooltip="View on GitHub">🐙</button>
-  <div id="version-number">v1.6.8</div>
+  <div id="version-number">v1.7.7</div>
 </div>
 
 <div id="splash-screen" class="overlay">
@@ -576,8 +592,8 @@ body.dark-mode .toggle-off:hover {
     <p>This is a simple map app to drop markers, name them, and share them with friends via a QR code.</p>
     <ul>
       <li><b>Add Cows:</b> Tap anywhere on the map to add a new cow marker.</li>
-      <li><b>Share Maps:</b> Tap the 🖼️ button to generate a QR code of all your cow locations.</li>
-      <li><b>Import Maps:</b> Tap the 📷 or 📂 button to scan a QR code from a camera or a file to load a new map.</li>
+      <li><b>Share Maps:</b> Tap the 📤 button to generate a QR code of all your cow locations.</li>
+      <li><b>Import Maps:</b> Tap the 📷 (camera) or 📥 (file) button to load a new map.</li>
       <li><b>Locate Me:</b> Tap the 📍 button to start/stop continuous location tracking.</li>
     </ul>
     <div class="checkbox-container">
@@ -656,16 +672,13 @@ window.onload = function() {
         searchOverlay = document.getElementById('searchOverlay'),
         cowSearchInput = document.getElementById('cowSearchInput'),
         searchBtn = document.getElementById('searchBtn'),
-        importQRInput = document.getElementById('importQRInput'),
-        importCSVInput = document.getElementById('importCSVInput'),
-        exportCSVBtn = document.getElementById('exportCSVBtn'),
-        importCSVBtn = document.getElementById('importCSVBtn'),
+        importFileInput = document.getElementById('importFileInput'),
         locateBtn = document.getElementById('locateBtn'),
         downloadQRBtn = document.getElementById('downloadQRBtn');
   
-  const showQRBtn = document.getElementById('showQRBtn');
+  const exportMapBtn = document.getElementById('exportMapBtn');
   const scanQRBtn = document.getElementById('scanQRBtn');
-  const importQRBtn = document.getElementById('importQRBtn');
+  const importMapBtn = document.getElementById('importMapBtn');
   const clearBtn = document.getElementById('clearBtn');
   
   function markersToCompressedData() {
@@ -711,7 +724,8 @@ window.onload = function() {
   function loadMarkers() {
     const stored = localStorage.getItem('cowMarkers');
     if (!stored) return;
-    loadFromJSON(stored);
+    // We pass 'false' to prevent the options modal from showing on initial load.
+    loadFromJSON(stored, false);
   }
   
   function addCowMarker(lat, lng, name = DEFAULT_COW_NAME(), time = new Date().toLocaleString()) {
@@ -784,7 +798,7 @@ window.onload = function() {
       popup.remove();
       saveMarkers();
     });
-    cancelBtn.addEventListener('click', () => popup.remove());
+      cancelBtn.addEventListener('click', () => popup.remove());
   }
   
   function showConfirmationModal(msg, onConfirm) {
@@ -792,24 +806,73 @@ window.onload = function() {
     body.insertAdjacentHTML('beforeend', html);
     const overlay = document.getElementById('confirmOverlay');
     overlay.querySelector('.confirm-btn').addEventListener('click', () => {
+      hideTooltip();
       onConfirm();
       overlay.remove();
     });
-    overlay.querySelector('.cancel-btn').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.cancel-btn').addEventListener('click', () => {
+        hideTooltip();
+        overlay.remove();
+    });
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
+        hideTooltip();
         overlay.remove();
       }
     });
   }
-  function showAlertDialog(msg) {
+
+  function showImportOptionsModal(count, onReplace, onMerge) {
+    const html = `<div id="importOptionsOverlay" class="overlay visible">
+      <div class="popup" style="max-width:350px;">
+        <p>Found ${count} cow(s). Would you like to merge with or replace your current map?</p>
+        <div style="display:flex;justify-content:center;gap:10px;margin-top:15px;">
+          <button class="action-btn replace-btn" data-tooltip="Replace (Enter)">🔁</button>
+          <button class="action-btn merge-btn" data-tooltip="Merge">➕</button>
+          <button class="action-btn cancel-btn" data-tooltip="Cancel (Esc)">✖️</button>
+        </div>
+      </div>
+    </div>`;
+    body.insertAdjacentHTML('beforeend', html);
+    const overlay = document.getElementById('importOptionsOverlay');
+    overlay.querySelector('.replace-btn').addEventListener('click', () => {
+      hideTooltip();
+      onReplace();
+      overlay.remove();
+    });
+    overlay.querySelector('.merge-btn').addEventListener('click', () => {
+      hideTooltip();
+      onMerge();
+      overlay.remove();
+    });
+    overlay.querySelector('.cancel-btn').addEventListener('click', () => {
+        hideTooltip();
+        overlay.remove();
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        hideTooltip();
+        overlay.remove();
+      }
+    });
+  }
+  
+  function showAlertDialog(msg, onOk) {
     const html = `<div id="alertOverlay" class="overlay visible"><div class="popup" style="max-width:300px;"><p>${msg}</p><button class="ok-btn" style="margin-top:15px;">OK</button></div></div>`;
     body.insertAdjacentHTML('beforeend', html);
     const overlay = document.getElementById('alertOverlay');
-    overlay.querySelector('.ok-btn').addEventListener('click', () => overlay.remove());
+    const okBtn = overlay.querySelector('.ok-btn');
+
+    const closeHandler = () => {
+      hideTooltip();
+      overlay.remove();
+      if (onOk) onOk();
+    };
+
+    okBtn.addEventListener('click', closeHandler);
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        overlay.remove();
+        closeHandler();
       }
     });
   }
@@ -821,47 +884,47 @@ window.onload = function() {
     }
   }
   
-  function loadFromJSON(json) {
+  function loadFromJSON(json, showOptions = true) {
     try {
       const data = JSON.parse(json);
+      let newCows;
+
       if (Array.isArray(data) && data.every(c => Array.isArray(c) && c.length === 4)) {
-        markers.forEach(m => {
-          if (isGroupingEnabled) {
-            cowMarkers.removeLayer(m);
-          } else {
-            map.removeLayer(m);
-          }
-        });
-        markers.length = 0;
-        cowMarkers.clearLayers();
-        data.forEach(c => addCowMarker(c[0], c[1], c[2], c[3]));
-        showAlertDialog(`Loaded map from new compressed format!`);
+        newCows = data.map(c => ({ lat: c[0], lng: c[1], name: c[2], time: c[3] }));
       } else if (Array.isArray(data) && data.every(c => typeof c.lat === 'number' && typeof c.lng === 'number' && typeof c.name === 'string')) {
-        markers.forEach(m => {
-          if (isGroupingEnabled) {
-            cowMarkers.removeLayer(m);
-          } else {
-            map.removeLayer(m);
-          }
-        });
-        markers.length = 0;
-        cowMarkers.clearLayers();
-        data.forEach(c => addCowMarker(c.lat, c.lng, c.name, c.time || new Date().toLocaleString()));
-        showAlertDialog(`Loaded map from old format (for backward compatibility).`);
+        newCows = data.map(c => ({ lat: c.lat, lng: c.lng, name: c.name, time: c.time || new Date().toLocaleString() }));
       } else {
         showAlertDialog('Invalid QR code data format.');
+        return;
       }
-      saveMarkers();
-      if (markers.length > 0) map.setView(markers[0].getLatLng(), CURRENT_LOCATION_ZOOM);
-      if (isGroupingEnabled) {
-        if (!map.hasLayer(cowMarkers)) {
-          map.addLayer(cowMarkers);
-        }
-      } else {
-        if (map.hasLayer(cowMarkers)) {
-          map.removeLayer(cowMarkers);
-        }
+      
+      const addCows = (cows) => {
+          cows.forEach(c => addCowMarker(c.lat, c.lng, c.name, c.time));
+          saveMarkers();
+          if (markers.length > 0) map.setView(markers[markers.length - 1].getLatLng(), CURRENT_LOCATION_ZOOM);
+      };
+
+      if (!showOptions) {
+        // This path is for the initial page load from localStorage
+        addCows(newCows);
+        return;
       }
+
+      const replaceAction = () => {
+        if (isGroupingEnabled) cowMarkers.clearLayers();
+        else markers.forEach(m => map.removeLayer(m));
+        markers.length = 0;
+        addCows(newCows);
+        showAlertDialog(`Replaced map with ${newCows.length} new cow(s).`);
+      };
+
+      const mergeAction = () => {
+        addCows(newCows);
+        showAlertDialog(`Added ${newCows.length} new cow(s) to your map.`);
+      };
+      
+      showImportOptionsModal(newCows.length, replaceAction, mergeAction);
+
     } catch (e) {
       showAlertDialog('Invalid QR code data format or data is corrupt.');
     }
@@ -893,6 +956,7 @@ window.onload = function() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   function loadFromCSV(csvText) {
@@ -910,28 +974,44 @@ window.onload = function() {
             throw new Error("CSV must contain 'lat', 'lng', and 'name' columns.");
         }
         
-        showConfirmationModal(`This will replace your current map with ${rows.length} cows from the CSV. Continue?`, () => {
-            if (isGroupingEnabled) {
-                cowMarkers.clearLayers();
-            } else {
-                markers.forEach(m => map.removeLayer(m));
-            }
-            markers.length = 0;
+        const newCows = rows.map(row => {
+            const values = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(val => val.replace(/^"|"$/g, '').replace(/""/g, '"'));
+            const lat = parseFloat(values[latIndex]);
+            const lng = parseFloat(values[lngIndex]);
+            if (isNaN(lat) || isNaN(lng)) return null;
+            return {
+                lat,
+                lng,
+                name: values[nameIndex],
+                time: timestampIndex > -1 ? values[timestampIndex] : new Date().toLocaleString()
+            };
+        }).filter(Boolean); // Filter out any null rows from parsing errors
 
-            rows.forEach(row => {
-                const values = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g).map(val => val.replace(/^"|"$/g, '').replace(/""/g, '"'));
-                const lat = parseFloat(values[latIndex]);
-                const lng = parseFloat(values[lngIndex]);
-                const name = values[nameIndex];
-                const timestamp = timestampIndex > -1 ? values[timestampIndex] : new Date().toLocaleString();
-                
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    addCowMarker(lat, lng, name, timestamp);
-                }
-            });
+        if (newCows.length === 0) {
+            showAlertDialog('Could not find any valid cow data in the CSV.');
+            return;
+        }
+
+        const addCows = (cows) => {
+            cows.forEach(c => addCowMarker(c.lat, c.lng, c.name, c.time));
             saveMarkers();
-            showAlertDialog('Map loaded from CSV!');
-        });
+            if (markers.length > 0) map.setView(markers[markers.length-1].getLatLng(), CURRENT_LOCATION_ZOOM);
+        };
+
+        const replaceAction = () => {
+            if (isGroupingEnabled) cowMarkers.clearLayers();
+            else markers.forEach(m => map.removeLayer(m));
+            markers.length = 0;
+            addCows(newCows);
+            showAlertDialog(`Replaced map with ${newCows.length} cow(s) from CSV.`);
+        };
+
+        const mergeAction = () => {
+            addCows(newCows);
+            showAlertDialog(`Added ${newCows.length} cow(s) from CSV to your map.`);
+        };
+
+        showImportOptionsModal(newCows.length, replaceAction, mergeAction);
 
     } catch (e) {
         showAlertDialog(`Error loading from CSV: ${e.message}`);
@@ -959,13 +1039,9 @@ window.onload = function() {
             inversionAttempts: "dontInvert"
           });
         if (code) {
-          try {
-            loadFromJSON(code.data);
-            scanOverlay.classList.remove('visible');
-            stopCamera();
-          } catch {
-            scanMessage.textContent = 'Invalid QR code.';
-          }
+          scanOverlay.classList.remove('visible');
+          stopCamera();
+          loadFromJSON(code.data);
         }
       }
       requestAnimationFrame(tick);
@@ -1038,11 +1114,49 @@ window.onload = function() {
   });
   map.on('popupclose', () => activeMarker = null);
   
+  const quickAddCowBtn = document.getElementById('quickAddCowBtn');
+  if (quickAddCowBtn) {
+    quickAddCowBtn.onclick = () => {
+      if (!navigator.geolocation) {
+        showAlertDialog('Geolocation is not supported by your browser.');
+        return;
+      }
+
+      quickAddCowBtn.innerHTML = '...';
+      quickAddCowBtn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          addCowMarker(latitude, longitude);
+          map.panTo(new L.LatLng(latitude, longitude));
+
+          // Add visual feedback
+          const confirmationCircle = L.circle([latitude, longitude], {
+            color: '#27ae60',
+            fillColor: '#6fcf97',
+            fillOpacity: 0.5,
+            radius: 20
+          }).addTo(map);
+          setTimeout(() => map.removeLayer(confirmationCircle), 1000);
+          
+          quickAddCowBtn.innerHTML = '🐮';
+          quickAddCowBtn.disabled = false;
+        },
+        () => {
+          showAlertDialog('Unable to get your location. Please enable location services.');
+          quickAddCowBtn.innerHTML = '🐮';
+          quickAddCowBtn.disabled = false;
+        },
+        { enableHighAccuracy: true }
+      );
+    };
+  }
+
   if (locateBtn) {
     locateBtn.onclick = () => {
       if (!isTracking) {
         map.locate({
-          // BUG FIX: setView is false to prevent map from resetting zoom on update.
           setView: false,
           maxZoom: CURRENT_LOCATION_ZOOM,
           watch: true
@@ -1068,7 +1182,6 @@ window.onload = function() {
   
   map.on('locationfound', e => {
     if (!locationMarker) {
-      // BUG FIX: Manually set the view only on the first location found event.
       map.setView(e.latlng, CURRENT_LOCATION_ZOOM);
       locationMarker = L.marker(e.latlng, {
         icon: L.divIcon({
@@ -1078,7 +1191,6 @@ window.onload = function() {
         title: 'Your Location'
       }).addTo(map);
     } else {
-      // For subsequent updates, just move the marker.
       locationMarker.setLatLng(e.latlng);
     }
   });
@@ -1110,14 +1222,20 @@ window.onload = function() {
       activeMarker = null;
     });
   }
-  if (showQRBtn) {
-    showQRBtn.onclick = () => {
+  if (exportMapBtn) {
+    exportMapBtn.onclick = () => {
+      if (markers.length === 0) {
+        showAlertDialog('No cows to export!');
+        return;
+      }
       const data = markersToCompressedData();
       if (data.length > MAX_QR_DATA_LENGTH) {
-        showConfirmationModal(
-          `The map data is too large for a QR code (${data.length} characters). Would you like to download a CSV file instead?`,
-          exportToCSV
-        );
+        exportToCSV();
+        setTimeout(() => {
+          showAlertDialog(
+            `The map data was too large for a QR code (${data.length} characters), so a CSV file has been downloaded instead.`
+          );
+        }, 100);
         return;
       }
       qrContainer.innerHTML = '';
@@ -1181,35 +1299,44 @@ window.onload = function() {
     };
   }
   
-  if (importQRBtn) {
-    importQRBtn.onclick = () => importQRInput.click();
+  if (importMapBtn) {
+    importMapBtn.onclick = () => importFileInput.click();
   }
-  if (importQRInput) {
-    importQRInput.onchange = e => {
+
+  if (importFileInput) {
+    importFileInput.onchange = e => {
       const file = e.target.files[0];
       if (!file) return;
-      const r = new FileReader();
-      r.onload = ev => {
-        const img = new Image();
-        img.onload = () => {
-          const c = document.createElement('canvas'),
-            ctx = c.getContext('2d');
-          c.width = img.width;
-          c.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          const d = ctx.getImageData(0, 0, c.width, c.height),
-            code = jsQR(d.data, d.width, d.height);
-          if (code) {
-            try {
+
+      if (file.type.startsWith('image/')) {
+        const r = new FileReader();
+        r.onload = ev => {
+          const img = new Image();
+          img.onload = () => {
+            const c = document.createElement('canvas'),
+              ctx = c.getContext('2d');
+            c.width = img.width;
+            c.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const d = ctx.getImageData(0, 0, c.width, c.height),
+              code = jsQR(d.data, d.width, d.height);
+            if (code) {
               loadFromJSON(code.data);
-            } catch {
-              showAlertDialog('Invalid QR code.');
-            }
-          } else showAlertDialog('No QR code found.');
+            } else showAlertDialog('No QR code found in the image.');
+          };
+          img.src = ev.target.result;
         };
-        img.src = ev.target.result;
-      };
-      r.readAsDataURL(file);
+        r.readAsDataURL(file);
+      } else if (file.name.endsWith('.csv') || file.type === 'text/csv') {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          loadFromCSV(event.target.result);
+        };
+        reader.readAsText(file);
+      } else {
+        showAlertDialog('Unsupported file type. Please select an image or a .csv file.');
+      }
+      importFileInput.value = '';
     };
   }
 
@@ -1300,30 +1427,6 @@ window.onload = function() {
           window.open('https://github.com/topazlad/moo-moo-markers', '_blank');
       };
   }
-
-  if (exportCSVBtn) {
-    exportCSVBtn.onclick = exportToCSV;
-  }
-
-  if (importCSVBtn) {
-    importCSVBtn.onclick = () => {
-        importCSVInput.click();
-    };
-  }
-
-  if (importCSVInput) {
-    importCSVInput.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            loadFromCSV(event.target.result);
-        };
-        reader.readAsText(file);
-        importCSVInput.value = ''; 
-    };
-  }
   
   const updateGroupingBtn = () => {
     if (!groupingToggleBtn) {
@@ -1383,56 +1486,125 @@ window.onload = function() {
     }
   }
 
+  // --- NEW: Enhanced Keyboard Controls for Modals & Popups ---
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.querySelectorAll('.overlay.visible').forEach(o => {
-      o.classList.remove('visible');
-      stopCamera();
-    });
-  });
-  
-  document.querySelectorAll('[data-tooltip]').forEach(btn => {
-    let t, timeout;
-    const show = () => {
-      if (t) t.remove();
-      t = document.createElement('div');
-      t.className = 'tooltip';
-      t.textContent = btn.dataset.tooltip;
-      document.body.appendChild(t);
-      const r = btn.getBoundingClientRect(),
-        tr = t.getBoundingClientRect();
-      let l = r.left + r.width / 2;
-      if (l < tr.width / 2) l = tr.width / 2;
-      else if (l > innerWidth - tr.width / 2) l = innerWidth - tr.width / 2;
-      t.style.left = `${l}px`;
-      t.style.top = `${r.top-10}px`;
-      setTimeout(() => t.classList.add('visible'), 10);
-    };
-    const hide = () => {
-      if (t) {
-        t.classList.remove('visible');
-        setTimeout(() => t?.remove(), 200);
-        t = null;
-      }
-    };
+    // Stop if the user is typing in an input field, except for the Escape key.
+    if (document.activeElement.tagName.toLowerCase() === 'input' && e.key !== 'Escape') {
+      return;
+    }
+
+    const visibleOverlays = Array.from(document.querySelectorAll('.overlay.visible'));
+    const topOverlay = visibleOverlays.length > 0 ? visibleOverlays[visibleOverlays.length - 1] : null;
+    const editPopup = document.querySelector('.edit-popup-content');
+
+    if (!topOverlay && !editPopup) return; // No active modal/popup, do nothing.
     
-    if (isTouchDevice) {
-      let longPressTimeout;
-      const handleTouchStart = () => {
-        longPressTimeout = setTimeout(show, LONG_PRESS_DURATION);
-      };
-      const handleTouchEnd = () => {
-        clearTimeout(longPressTimeout);
-        hide();
-      };
-      
-      btn.addEventListener('touchstart', handleTouchStart);
-      btn.addEventListener('touchend', handleTouchEnd);
-      btn.addEventListener('touchmove', handleTouchEnd);
+    if (['Enter', ' ', 'Escape'].includes(e.key)) {
+        e.preventDefault();
     } else {
-      btn.onmouseenter = show;
-      btn.onmouseleave = hide;
+        return;
+    }
+
+    if (e.key === 'Escape') {
+      if (topOverlay) {
+        const cancelBtn = topOverlay.querySelector('.cancel-btn, .ok-btn');
+        if (cancelBtn) {
+          cancelBtn.click();
+        } else {
+          topOverlay.classList.remove('visible');
+          if (topOverlay.id === 'scanOverlay') stopCamera();
+        }
+      } else if (editPopup) {
+        const cancelBtn = editPopup.querySelector('.cancel-btn');
+        if (cancelBtn) cancelBtn.click();
+      }
+    }
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      let primaryBtn;
+      if (topOverlay) {
+        if (topOverlay.id === 'confirmOverlay') {
+            primaryBtn = topOverlay.querySelector('.confirm-btn');
+        } else if (topOverlay.id === 'alertOverlay' || topOverlay.id === 'splash-screen') {
+            primaryBtn = topOverlay.querySelector('.ok-btn');
+        } else if (topOverlay.id === 'importOptionsOverlay') {
+            const focused = document.activeElement;
+            if (focused && focused.matches('#importOptionsOverlay .action-btn')) {
+                focused.click();
+                return;
+            }
+            primaryBtn = topOverlay.querySelector('.replace-btn');
+        } else if (topOverlay.id === 'searchOverlay') {
+            primaryBtn = topOverlay.querySelector('#searchExecuteBtn');
+        }
+      } else if (editPopup) {
+        primaryBtn = editPopup.querySelector('.save-btn');
+      }
+
+      if (primaryBtn) primaryBtn.click();
     }
   });
+  
+  // --- REFACTORED: Tooltip logic with event delegation for dynamic elements ---
+  let tooltipElement;
+  let tooltipTimeout;
+
+  const showTooltip = (btn) => {
+    if (tooltipElement) tooltipElement.remove();
+    tooltipElement = document.createElement('div');
+    tooltipElement.className = 'tooltip';
+    tooltipElement.textContent = btn.dataset.tooltip;
+    document.body.appendChild(tooltipElement);
+    const r = btn.getBoundingClientRect(),
+      tr = tooltipElement.getBoundingClientRect();
+    let l = r.left + r.width / 2;
+    if (l < tr.width / 2) l = tr.width / 2;
+    else if (l > innerWidth - tr.width / 2) l = innerWidth - tr.width / 2;
+    tooltipElement.style.left = `${l}px`;
+    tooltipElement.style.top = `${r.top - tr.height - 5}px`;
+    clearTimeout(tooltipTimeout);
+    tooltipTimeout = setTimeout(() => tooltipElement.classList.add('visible'), 10);
+  };
+  
+  const hideTooltip = () => {
+    clearTimeout(tooltipTimeout);
+    if (tooltipElement) {
+      tooltipElement.classList.remove('visible');
+      tooltipTimeout = setTimeout(() => {
+        tooltipElement?.remove();
+        tooltipElement = null;
+      }, 200);
+    }
+  };
+
+  if (isTouchDevice) {
+    let longPressTimeout;
+    document.body.addEventListener('touchstart', e => {
+        const btn = e.target.closest('[data-tooltip]');
+        if(btn) {
+            clearTimeout(longPressTimeout);
+            longPressTimeout = setTimeout(() => showTooltip(btn), LONG_PRESS_DURATION);
+        }
+    }, { passive: true });
+    
+    document.body.addEventListener('touchend', () => {
+        clearTimeout(longPressTimeout);
+        hideTooltip();
+    });
+    
+    document.body.addEventListener('touchmove', () => {
+        clearTimeout(longPressTimeout);
+    });
+  } else {
+    document.body.addEventListener('mouseover', e => {
+      const btn = e.target.closest('[data-tooltip]');
+      if (btn) showTooltip(btn);
+    });
+    document.body.addEventListener('mouseout', e => {
+      const btn = e.target.closest('[data-tooltip]');
+      if (btn) hideTooltip();
+    });
+  }
   
   if (body) {
     body.classList.toggle('dark-mode', isDarkMode);
