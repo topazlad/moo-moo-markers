@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Moo Moo Markers v1.7.7 - Tooltip & Keyboard Fix</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Moo Moo Markers v1.7.8 - Responsive UI</title>
+<!-- v1.7.8: Added responsive UI for better mobile experience. -->
 <!-- v1.7.7: Fixed persistent tooltips after modal clicks. -->
 <!-- v1.7.6: Added intuitive keyboard controls for dialogs and fixed tooltips. -->
 <!-- v1.7.5: Added option to merge or replace markers on import. -->
@@ -552,6 +554,36 @@ body.dark-mode .toggle-off:hover {
   box-shadow: inset 2px 2px 6px #050505,-6px -6px 12px #323232!important;
 }
 
+/* --- NEW: Responsive UI for Mobile Devices --- */
+@media (max-width: 600px) {
+  button,
+  .action-btn,
+  #menuBtn {
+    width: 55px;
+    height: 55px;
+    font-size: 1.8rem;
+    border-radius: 16px;
+  }
+  
+  #menuBtn {
+      font-size: 35px;
+  }
+
+  nav#controls {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  
+  .popup .action-btn {
+      width: 55px;
+      height: 55px;
+  }
+
+  #side-menu {
+      width: 75px;
+      right: -75px;
+  }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -583,7 +615,7 @@ body.dark-mode .toggle-off:hover {
   <button id="darkModeToggleBtn" class="dark" data-tooltip="Toggle Dark Mode">⚫</button>
   <button id="showSplashBtn" data-tooltip="Show Welcome Screen">?</button>
   <button id="githubLinkBtn" data-tooltip="View on GitHub">🐙</button>
-  <div id="version-number">v1.7.7</div>
+  <div id="version-number">v1.7.8</div>
 </div>
 
 <div id="splash-screen" class="overlay">
